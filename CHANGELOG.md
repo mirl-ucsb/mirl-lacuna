@@ -5,6 +5,14 @@ nothing erased, each change dated and explained. Versions follow
 [semantic versioning](https://semver.org); project files from any earlier
 version load cleanly in any later one.
 
+## 1.4.2 (2026-06-11)
+
+- Releases are archived on [Zenodo](https://zenodo.org) from this version
+  onward, each minting a DOI, so the register can be cited the way it asks
+  others to cite.
+- Housekeeping for the public record: this CHANGELOG, the archive metadata,
+  and the repository's homepage link to the live copy.
+
 ## 1.4.1 (2026-06-11)
 
 - The loss-event field on the cataloguer's desk can now name a new event in

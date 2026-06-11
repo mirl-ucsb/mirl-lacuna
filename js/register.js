@@ -204,6 +204,19 @@ LC.Register = (function () {
         applyBatch(r => { r.eventId = id; }, 'Event assigned');
       });
       wrap.append(U.h('span', { class: 'grp' }, U.h('span', { class: 'label' }, 'Assign'), evSel));
+    } else {
+      /* no events yet: name one here and assign it in the same stroke,
+         the forty-entries-from-one-fire moment after an import */
+      const evName = U.h('input', { type: 'text', placeholder: 'name a loss event…', style: { width: '170px' } });
+      const evGo = () => {
+        const name = evName.value.trim();
+        if (!name) return;
+        const ev = LC.Model.addEvent();
+        ev.name = name;
+        applyBatch(r => { r.eventId = ev.id; }, 'Event "' + name + '" assigned');
+      };
+      evName.addEventListener('keydown', e => { if (e.key === 'Enter') evGo(); });
+      wrap.append(U.h('span', { class: 'grp' }, evName, U.h('button', { class: 'act', onclick: evGo }, 'Add event')));
     }
 
     const tagIn = U.h('input', { type: 'text', placeholder: 'a tag to add…', style: { width: '150px' } });

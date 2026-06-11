@@ -469,19 +469,41 @@ LC.Desk = (function () {
       });
       certPick.append(b);
     });
-    const evSel = U.h('select', null,
-      U.h('option', { value: '' }, 'no event'),
-      ...(S.project.events || []).map(ev =>
-        U.h('option', { value: ev.id, selected: r.eventId === ev.id ? '' : null },
-          (ev.name || 'unnamed event') + (ev.date ? ' (' + ev.date + ')' : ''))));
-    evSel.addEventListener('change', () => { r.eventId = evSel.value || null; LC.App.entryChanged(r); });
+    const evBox = U.h('div', { class: 'field' });
+    const drawEvent = () => {
+      evBox.innerHTML = '';
+      evBox.append(U.h('label', null, 'Loss event'));
+      const evSel = U.h('select', null,
+        U.h('option', { value: '' }, 'no event'),
+        ...(S.project.events || []).map(ev =>
+          U.h('option', { value: ev.id, selected: r.eventId === ev.id ? '' : null },
+            (ev.name || 'unnamed event') + (ev.date ? ' (' + ev.date + ')' : ''))));
+      evSel.addEventListener('change', () => { r.eventId = evSel.value || null; LC.App.entryChanged(r); });
+      const newName = U.h('input', { type: 'text', placeholder: 'or name a new event…', style: { flex: '1' }, dir: 'auto' });
+      const add = U.h('button', {
+        class: 'act', onclick: () => {
+          const name = newName.value.trim();
+          if (!name) return U.toast('Give the event a name first');
+          const ev = LC.Model.addEvent();
+          ev.name = name;
+          r.eventId = ev.id;
+          LC.App.entryChanged(r, true);
+          drawEvent();
+          U.toast('Event added and assigned; its date and note live on the Timeline folio');
+        },
+      }, '+ Add');
+      newName.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); add.click(); } });
+      evBox.append(evSel,
+        U.h('div', { style: { display: 'flex', gap: '14px', alignItems: 'baseline', marginTop: '10px' } }, newName, add),
+        U.h('div', { class: 'note' }, 'Events (a fire, a sale, a flood) gather entries; their dates, places, and notes are kept on the Timeline folio.'));
+    };
+    drawEvent();
     drawHistory();
     return sect('What became of it', 'status, and how firmly it is known',
       U.h('div', { class: 'field' }, U.h('label', null, 'Status'), statusPick),
       histBox,
       U.h('div', { class: 'field' }, U.h('label', null, 'Certainty'), certPick),
-      U.h('div', { class: 'field' }, U.h('label', null, 'Loss event'), evSel,
-        U.h('div', { class: 'note' }, 'Events (a fire, a sale, a flood) are kept on the Timeline folio; entries that share one are gathered there.')));
+      evBox);
   }
 
   /* a narrator picker; identities show here, only aliases publish */

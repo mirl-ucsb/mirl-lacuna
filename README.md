@@ -422,7 +422,7 @@ This repository carries a [`CITATION.cff`](CITATION.cff) file, so GitHub's
 you a reference in APA or BibTeX form. In a note, cite it as:
 
 > Jeff O'Brien, *MIRL Lacuna: a catalogue of an absent archive*, version
-> 1.4.0, Material / Image Research Lab, UC Santa Barbara, 2026,
+> 1.4.1, Material / Image Research Lab, UC Santa Barbara, 2026,
 > https://github.com/mirl-ucsb/mirl-lacuna.
 
 ---

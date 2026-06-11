@@ -19,7 +19,7 @@ authors:
     affiliation: >-
       Material / Image Research Lab, Department of History of Art &
       Architecture, University of California, Santa Barbara
-version: "1.4.0"
+version: "1.4.1"
 date-released: "2026-06-11"
 license: MIT
 repository-code: "https://github.com/mirl-ucsb/mirl-lacuna"

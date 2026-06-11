@@ -61,9 +61,13 @@ header.app .plate {
 header.app h1 { font-size: 27px; margin: 0; font-weight: 600; letter-spacing: .02em; line-height: 1.1; }
 header.app .tag { display: block; margin-top: 2px; font-style: italic; color: var(--ink-2); font-size: 16.5px; }
 header.app a.lab {
-  position: absolute; right: 44px; top: 44px;
+  position: absolute; right: 44px; top: 44px; text-align: right;
   font-family: var(--mono); color: var(--ink-3); text-decoration: none;
   font-size: 12px; text-transform: uppercase; letter-spacing: .14em;
+}
+header.app a.lab .uni {
+  display: block; margin-top: 5px;
+  font-size: 10.5px; letter-spacing: .12em;
 }
 header.app a.lab:hover { color: var(--stamp); }
 

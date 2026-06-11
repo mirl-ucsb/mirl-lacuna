@@ -119,37 +119,81 @@ LC.Importers = (function () {
     return JSON.stringify(c);
   }
 
-  /* what a merge would do: new entries, identical ones, and true conflicts */
+  /* what a merge would do: new entries, identical ones, and true conflicts.
+     Events and sources from the other file come along too; where their ids
+     collide with different content (two unrelated registers both counting
+     from evt-1), the incoming ones are renumbered rather than confused. */
   function planMerge(data) {
     if (!data || data.format !== 'mirl-lacuna' || !Array.isArray(data.records)) {
       throw new Error('Not a Lacuna project file.');
     }
     const incoming = data.records.map(LC.Model.normalize);
-    const plan = { newRecords: [], conflicts: [], identical: 0, newEvents: [] };
+    const plan = { newRecords: [], conflicts: [], identical: 0, newEvents: [], newSources: [], evtMap: {}, srcMap: {} };
+
+    const meatOf = o => { const c = Object.assign({}, o); delete c.id; return JSON.stringify(c); };
+    const remapSide = (list, local, prefix, mapOut, addOut) => {
+      let max = 0;
+      local.forEach(x => { const m = new RegExp('^' + prefix + '-(\\d+)$').exec(x.id || ''); if (m) max = Math.max(max, +m[1]); });
+      list.forEach(x => {
+        if (!x || !x.id) return;
+        const mine = local.find(y => y.id === x.id);
+        if (!mine) addOut.push(x);
+        else if (meatOf(mine) !== meatOf(x)) {
+          const nid = prefix + '-' + (++max);
+          mapOut[x.id] = nid;
+          addOut.push(Object.assign({}, x, { id: nid }));
+        }
+        /* identical content under the same id: nothing to do */
+      });
+    };
+    remapSide(((data.project && data.project.events) || []).map(e =>
+      ({ id: e.id, name: e.name || '', date: e.date || '', place: e.place || '', note: e.note || '' })),
+      S.project.events || [], 'evt', plan.evtMap, plan.newEvents);
+    remapSide(((data.project && data.project.sources) || []).map(s =>
+      ({ id: s.id, alias: s.alias || '', name: s.name || '', contact: s.contact || '', consent: s.consent || '', note: s.note || '' })),
+      S.project.sources || [], 'src', plan.srcMap, plan.newSources);
+
     incoming.forEach(inc => {
       const local = LC.Model.get(inc.id);
       if (!local) plan.newRecords.push(inc);
       else if (contentKey(local) === contentKey(inc)) plan.identical++;
       else plan.conflicts.push({ id: inc.id, local, incoming: inc });
     });
-    ((data.project && data.project.events) || []).forEach(ev => {
-      if (ev && ev.id && !(S.project.events || []).some(x => x.id === ev.id)) {
-        plan.newEvents.push({ id: ev.id, name: ev.name || '', date: ev.date || '', place: ev.place || '', note: ev.note || '' });
-      }
-    });
     return plan;
   }
 
-  /* choices: { entryId: 'mine' | 'theirs' }; anything unchosen keeps mine */
+  /* choices: { entryId: 'mine' | 'theirs' | 'both' }; unchosen keeps mine.
+     'both' lets the incoming entry join under a fresh number: the honest
+     answer when two registers used the same number for different works. */
   function applyMerge(plan, choices) {
-    plan.newRecords.forEach(r => S.records.push(r));
+    const idMap = {};
+    const taken = [];   /* every record adopted from the other register */
+
+    plan.newRecords.forEach(r => { S.records.push(r); taken.push(r); });
     plan.conflicts.forEach(c => {
-      if ((choices && choices[c.id]) === 'theirs') {
+      const pick = (choices && choices[c.id]) || 'mine';
+      if (pick === 'theirs') {
         const i = S.records.findIndex(x => x.id === c.id);
-        if (i >= 0) S.records[i] = c.incoming;
+        if (i >= 0) { S.records[i] = c.incoming; taken.push(c.incoming); }
+      } else if (pick === 'both') {
+        const nid = LC.Model.nextId();
+        idMap[c.id] = nid;
+        const copy = Object.assign({}, c.incoming, { id: nid });
+        S.records.push(copy);
+        taken.push(copy);
       }
     });
+
+    /* point everything adopted at its renumbered companions */
+    taken.forEach(r => {
+      (r.relations || []).forEach(x => { if (idMap[x.target]) x.target = idMap[x.target]; });
+      if (r.eventId && plan.evtMap[r.eventId]) r.eventId = plan.evtMap[r.eventId];
+      (r.evidence || []).forEach(e => { if (e.sourceId && plan.srcMap[e.sourceId]) e.sourceId = plan.srcMap[e.sourceId]; });
+      (r.sightings || []).forEach(x => { if (x.sourceId && plan.srcMap[x.sourceId]) x.sourceId = plan.srcMap[x.sourceId]; });
+    });
+
     plan.newEvents.forEach(e => S.project.events.push(e));
+    plan.newSources.forEach(s => S.project.sources.push(s));
     S.project.modified = U.nowISO();
   }
 

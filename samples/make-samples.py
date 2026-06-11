@@ -262,12 +262,12 @@ def thumb_of(path):
 _ev_n = [0]
 
 
-def ev(evtype, label, name=None, url="", consent="public", rights="", note=""):
+def ev(evtype, label, name=None, url="", consent="public", rights="", note="", source=None):
     """An evidence item; when a shipped image is named, hash and thumb it."""
     _ev_n[0] += 1
     e = {"id": "ev-%02d" % _ev_n[0], "type": evtype, "label": label, "file": None,
          "url": url, "sha256": "", "rights": rights, "consent": consent,
-         "note": note, "thumb": ""}
+         "sourceId": source, "note": note, "thumb": ""}
     if name:
         path = written[name]
         e["file"] = {"name": name, "size": os.path.getsize(path), "type": "image/png"}
@@ -300,6 +300,8 @@ def rec(n, **kw):
         "lastSeen": {"date": "", "place": "", "source": ""},
         "note": "", "tags": [],
         "eventId": None, "relations": [],
+        "extent": {"amount": None, "unit": ""},
+        "sightings": [], "statusHistory": [], "log": [],
         "location": {"place": "", "lat": None, "lon": None, "publish": "withheld"},
         "evidence": [], "copies": [],
         "publish": True,   # the sample publishes its entries so the finding aid is full
@@ -311,6 +313,17 @@ def rec(n, **kw):
 
 
 STUDIO = "Studio al-Qamar portrait files"
+
+SOURCES = [
+    {"id": "src-1", "alias": "the studio's apprentice",
+     "name": "(invented; kept off the record in the sample)", "contact": "",
+     "consent": "recorded 2019; the account itself is restricted at their request",
+     "note": "apprenticed 1969 to 1976; remembers the shop room by room"},
+    {"id": "src-2", "alias": "a person who saw the ledger",
+     "name": "(invented; kept off the record in the sample)", "contact": "",
+     "consent": "embargoed until they say otherwise",
+     "note": "saw the sitters' ledger after the shop was emptied"},
+]
 
 EVENTS = [
     {"id": "evt-1", "name": "The winter fire of 1976", "date": "February 1976",
@@ -344,7 +357,7 @@ records = [
             ev("photograph", "Copy print of 1935, photographed in 2019", name="copy-portrait-daughters.png",
                note="the family's copy, rephotographed"),
             ev("testimony", "Account of the studio's apprentice, recorded 2019", consent="restricted",
-               note="held for the narrator; not for publication"),
+               source="src-1", note="held for the narrator; not for publication"),
         ]),
 
     rec(2,
@@ -358,7 +371,7 @@ records = [
               "of it survived the winter fire of 1976.\n\nThe inventory page reproduced here was "
               "kept at the photographer's house and is the best record of what the cabinet held."),
         tags=["glass plates", "negatives"],
-        eventId="evt-1",
+        eventId="evt-1", extent={"amount": 1140, "unit": "glass plates"},
         location={"place": "Qamariyya", "lat": 34.1, "lon": 35.9, "publish": "exact"},
         evidence=[
             ev("document", "Inventory of the plate cabinet, 1931, page 3", name="inventory-page.png",
@@ -377,7 +390,10 @@ records = [
               "asked for its return. Nothing came of it.\n\nThe family asked that this entry "
               "stay out of the published register for now; it is held back, catalogued and counted."),
         tags=["albums", "weddings"],
-        eventId="evt-1", publish=False,
+        eventId="evt-1", publish=False, extent={"amount": 40, "unit": "mounted prints"},
+        sightings=[{"id": "sg-01", "date": "autumn 1977", "kind": "offered for sale",
+                    "bearing": "supports", "place": "inland", "sourceId": "src-1",
+                    "note": "a dealer was said to be offering a wedding album of forty leaves"}],
         location={"place": "last offered for sale inland", "lat": 34.4, "lon": 36.2, "publish": "withheld"},
         evidence=[
             ev("citation", "Notice in the Qamariyya town paper, March 1976",
@@ -415,6 +431,9 @@ records = [
               "known: two in collections, one in a dealer's stock. The rest is unaccounted for."),
         tags=["ledgers", "daybooks"],
         eventId="evt-2",
+        sightings=[{"id": "sg-02", "date": "2003", "kind": "seen",
+                    "bearing": "supports", "place": "a private collection abroad", "sourceId": None,
+                    "note": "leaves 44 to 60, listed by their keeper"}],
         copies=[
             cp("Bayt al-Suwar collection", "leaves 12 to 31", note="acquired 1989"),
             cp("a private collection abroad", "leaves 44 to 60", note="seen and listed in 2003"),
@@ -430,6 +449,10 @@ records = [
               "envelopes were deposited with the public works office and never returned. They may "
               "sit uncatalogued in the municipal deposit, which has no reading room and no list."),
         tags=["floods", "negatives", "municipal work"],
+        log=[{"id": "lg-01", "date": "2026-05-02",
+              "note": "Asked at the public works office: no reading room, no list, no answer to letters."},
+             {"id": "lg-02", "date": "2026-06-09",
+              "note": "The retired clerk is said to remember the deposit; ask the association for an introduction."}],
         location={"place": "Qamariyya, municipal deposit", "lat": None, "lon": None, "publish": "withheld"}),
 
     rec(7,
@@ -459,7 +482,7 @@ records = [
               "street series, the daybook counts some two hundred frames; one torn sheet survives, "
               "eleven frames, found behind the forced cabinet."),
         tags=["street", "contact sheets"],
-        eventId="evt-1",
+        eventId="evt-1", extent={"amount": 200, "unit": "frames"},
         evidence=[
             ev("photograph", "The surviving contact sheet (scan)", name="contact-sheet-fragment.png",
                note="torn at the right edge when the cabinet was forced"),
@@ -477,7 +500,7 @@ records = [
         eventId="evt-2",
         evidence=[
             ev("testimony", "Account concerning the ledger, recorded 2021", consent="embargoed",
-               note="closed at the narrator's request"),
+               source="src-2", note="closed at the narrator's request"),
         ]),
 
     rec(10,
@@ -513,6 +536,8 @@ records = [
               "rebound in the 1990s."),
         tags=["albums", "villages", "harvests"],
         eventId="evt-1",
+        statusHistory=[{"status": "unlocated", "certainty": "probable", "until": "2026-06-10",
+                        "reason": "the association's rebound copy was confirmed in the 1990s"}],
         location={"place": "Tal Maja", "lat": 33.8, "lon": 36.4, "publish": "exact"},
         copies=[
             cp("Tal Maja village association", "the anniversary copy", note="rebound; pages complete"),
@@ -536,7 +561,9 @@ project = {
     "compiler": "the sample cataloguer",
     "institution": "MIRL Lacuna sample data",
     "contact": "",
+    "siglum": "LAC",
     "events": EVENTS,
+    "sources": SOURCES,
     "note": ("Everything in this register is invented: the town of Qamariyya, the Studio al-Qamar, "
              "its people, and every loss recorded here. It exists to show how MIRL Lacuna works. "
              "Any resemblance to real people, places, archives, or events is coincidental."),

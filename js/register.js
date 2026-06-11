@@ -119,6 +119,15 @@ LC.Register = (function () {
         fmField('compiler', 'Compiled by', 'your name'),
         fmField('institution', 'Institution or community', 'optional')),
       fmField('contact', 'Contact', 'optional; appears in the finding aid'));
+    const sig = U.h('input', { type: 'text', value: p.siglum || 'LAC', style: { width: '110px', fontFamily: 'var(--mono)', textTransform: 'uppercase' } });
+    sig.addEventListener('input', () => {
+      S.project.siglum = sig.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') || 'LAC';
+      LC.App.projectChanged();
+    });
+    form.append(U.h('div', { class: 'field' },
+      U.h('label', null, 'Register mark (siglum)'), sig,
+      U.h('div', { class: 'note' },
+        'Used in new entry numbers, like a manuscript siglum, so registers can cite one another without colliding. Existing entries keep their numbers.')));
     const noteArea = U.h('textarea', { rows: '3', placeholder: 'A short note on the scope of this register: what it covers, on whose behalf, with what sources.' });
     noteArea.value = p.note || '';
     noteArea.addEventListener('input', () => { p.note = noteArea.value; LC.App.projectChanged(); });
@@ -181,7 +190,7 @@ LC.Register = (function () {
     stSel.addEventListener('change', () => {
       if (!stSel.value) return;
       const key = stSel.value;
-      applyBatch(r => { r.status = key; }, 'Status set');
+      applyBatch(r => { LC.Model.setStatus(r, key); }, 'Status set');
     });
     wrap.append(U.h('span', { class: 'grp' }, U.h('span', { class: 'label' }, 'Set'), stSel));
 

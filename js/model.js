@@ -81,6 +81,13 @@ LC.vocab = {
     { key: 'has-copy', label: 'Has copy',   inverse: 'copy-of' },
     { key: 'related',  label: 'Related to', inverse: 'related' },
   ],
+  /* kinds of dated report about a lost thing */
+  SIGHTKIND: ['seen', 'offered for sale', 'published', 'reported destroyed', 'reported moved', 'other'],
+  /* what a sighting does to the entry's stated fate */
+  BEARING: [
+    { key: 'supports',    label: 'supports' },
+    { key: 'complicates', label: 'complicates' },
+  ],
 };
 LC.vocab.statusOf = k => LC.vocab.STATUS.find(s => s.key === k) || LC.vocab.STATUS[4];
 LC.vocab.certaintyOf = k => LC.vocab.CERTAINTY.find(c => c.key === k) || LC.vocab.CERTAINTY[2];
@@ -95,7 +102,10 @@ LC.blankProject = () => ({
   institution: '',
   contact: '',
   note: '',
-  events: [],   /* loss events: { id, name, date, place, note } */
+  siglum: 'LAC', /* the register's mark, used in entry numbers */
+  events: [],    /* loss events: { id, name, date, place, note } */
+  sources: [],   /* the people who remember: { id, alias, name, contact, consent, note };
+                    only the alias is ever published */
   created: LC.util.nowISO(),
   modified: LC.util.nowISO(),
 });
@@ -112,10 +122,17 @@ LC.state = {
 LC.Model = (function () {
   const S = LC.state;
 
+  function siglum() {
+    const s = String((S.project && S.project.siglum) || 'LAC').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    return s || 'LAC';
+  }
+
   function nextId() {
+    const sig = siglum();
+    const re = new RegExp('^' + sig + '-(\\d+)$');
     let max = 0;
-    S.records.forEach(r => { const m = /^LAC-(\d+)$/.exec(r.id || ''); if (m) max = Math.max(max, +m[1]); });
-    return 'LAC-' + String(max + 1).padStart(4, '0');
+    S.records.forEach(r => { const m = re.exec(r.id || ''); if (m) max = Math.max(max, +m[1]); });
+    return sig + '-' + String(max + 1).padStart(4, '0');
   }
 
   function newRecord() {
@@ -128,6 +145,10 @@ LC.Model = (function () {
       note: '', tags: [],
       eventId: null,        /* the loss event this entry belongs to */
       relations: [],        /* typed links: { type, target } */
+      extent: { amount: null, unit: '' },   /* how much: 1,140 plates, 40 albums */
+      sightings: [],        /* dated reports: { id, date, kind, bearing, place, sourceId, note } */
+      statusHistory: [],    /* former fates, never erased: { status, certainty, until, reason } */
+      log: [],              /* the investigation, dated; working file only: { id, date, note } */
       location: { place: '', lat: null, lon: null, publish: 'withheld' },
       evidence: [], copies: [],
       publish: false,       /* entries are held back until the cataloguer says otherwise */
@@ -154,11 +175,22 @@ LC.Model = (function () {
     out.relations = (Array.isArray(r.relations) ? r.relations : [])
       .filter(x => x && x.target && LC.vocab.RELATION.some(v => v.key === x.type))
       .map(x => ({ type: x.type, target: x.target }));
+    out.extent = Object.assign({ amount: null, unit: '' }, r.extent || {});
+    out.extent.amount = (typeof out.extent.amount === 'number' && isFinite(out.extent.amount)) ? out.extent.amount : null;
+    out.sightings = (Array.isArray(r.sightings) ? r.sightings : []).map(x => Object.assign({
+      id: LC.util.uid(), date: '', kind: 'seen', bearing: 'supports', place: '', sourceId: null, note: '',
+    }, x));
+    out.statusHistory = (Array.isArray(r.statusHistory) ? r.statusHistory : [])
+      .filter(x => x && x.status)
+      .map(x => ({ status: x.status, certainty: x.certainty || '', until: x.until || '', reason: x.reason || '' }));
+    out.log = (Array.isArray(r.log) ? r.log : []).map(x => Object.assign({
+      id: LC.util.uid(), date: '', note: '',
+    }, x));
     out.publish = !!r.publish;
     out.struck = !!r.struck;
     out.evidence = (Array.isArray(r.evidence) ? r.evidence : []).map(e => Object.assign({
       id: LC.util.uid(), type: 'photograph', label: '', file: null, url: '', archived: '',
-      sha256: '', rights: '', consent: 'restricted', until: '', note: '', thumb: '',
+      sha256: '', rights: '', consent: 'restricted', until: '', note: '', thumb: '', sourceId: null,
     }, e));
     out.copies = (Array.isArray(r.copies) ? r.copies : []).map(c => Object.assign({
       id: LC.util.uid(), institution: '', identifier: '', iiif: '', url: '', note: '',
@@ -210,13 +242,16 @@ LC.Model = (function () {
 
   /* a copy fit to publish: only entries marked publish, never struck ones;
      restricted and embargoed evidence withheld; places withheld or rounded
-     unless marked exact; relations only between published entries */
+     unless marked exact; relations only between published entries; sources
+     reduced to their public aliases; the investigation log never leaves */
   function publicClone() {
     const clone = JSON.parse(JSON.stringify({ project: S.project, records: S.records }));
+    clone.project.sources = (clone.project.sources || []).map(s => ({ id: s.id, alias: s.alias || 'a source' }));
     clone.records = clone.records.filter(r => !r.struck && r.publish);
     const kept = new Set(clone.records.map(r => r.id));
     const round1 = x => Math.round(x * 10) / 10;
     clone.records.forEach(r => {
+      r.log = [];
       r.evidence = (r.evidence || []).filter(e => e.consent === 'public');
       r.relations = (r.relations || []).filter(x => kept.has(x.target));
       const loc = r.location || {};
@@ -250,6 +285,63 @@ LC.Model = (function () {
     return out;
   }
 
+  /* ---------- a change of fate is recorded, never overwritten ---------- */
+  function setStatus(r, status, reason) {
+    if (r.status === status) return;
+    r.statusHistory.push({
+      status: r.status, certainty: r.certainty,
+      until: LC.util.nowISO().slice(0, 10), reason: reason || '',
+    });
+    r.status = status;
+  }
+
+  /* ---------- the people who remember ---------- */
+  function sourceOf(id) { return (S.project.sources || []).find(s => s.id === id) || null; }
+
+  function addSource() {
+    let max = 0;
+    (S.project.sources || []).forEach(s => { const m = /^src-(\d+)$/.exec(s.id || ''); if (m) max = Math.max(max, +m[1]); });
+    const src = { id: 'src-' + (max + 1), alias: '', name: '', contact: '', consent: '', note: '' };
+    S.project.sources.push(src);
+    S.project.modified = LC.util.nowISO();
+    return src;
+  }
+
+  function removeSource(id) {
+    S.project.sources = (S.project.sources || []).filter(s => s.id !== id);
+    let cleared = 0;
+    S.records.forEach(r => {
+      (r.evidence || []).forEach(e => { if (e.sourceId === id) { e.sourceId = null; cleared++; } });
+      (r.sightings || []).forEach(x => { if (x.sourceId === id) { x.sourceId = null; cleared++; } });
+    });
+    S.project.modified = LC.util.nowISO();
+    return cleared;
+  }
+
+  /* everything that rests on this person's word */
+  function restsOn(id) {
+    const out = [];
+    S.records.forEach(r => {
+      (r.evidence || []).forEach(e => {
+        if (e.sourceId === id) out.push({ record: r, kind: 'evidence', item: e });
+      });
+      (r.sightings || []).forEach(x => {
+        if (x.sourceId === id) out.push({ record: r, kind: 'sighting', item: x });
+      });
+    });
+    return out;
+  }
+
+  /* when consent is withdrawn: pull their evidence out of everything public */
+  function restrictSource(id, consent) {
+    let n = 0;
+    S.records.forEach(r => (r.evidence || []).forEach(e => {
+      if (e.sourceId === id && e.consent === 'public') { e.consent = consent || 'restricted'; n++; }
+    }));
+    S.project.modified = LC.util.nowISO();
+    return n;
+  }
+
   /* ---------- loss events ---------- */
   function eventOf(id) { return (S.project.events || []).find(e => e.id === id) || null; }
 
@@ -278,6 +370,14 @@ LC.Model = (function () {
     S.project.events = (Array.isArray(S.project.events) ? S.project.events : [])
       .filter(e => e && e.id)
       .map(e => ({ id: e.id, name: e.name || '', date: e.date || '', place: e.place || '', note: e.note || '' }));
+    S.project.sources = (Array.isArray(S.project.sources) ? S.project.sources : [])
+      .filter(s => s && s.id)
+      .map(s => ({ id: s.id, alias: s.alias || '', name: s.name || '', contact: s.contact || '', consent: s.consent || '', note: s.note || '' }));
+    if (typeof S.project.siglum !== 'string' || !S.project.siglum.trim()) {
+      /* older files: read the mark off the existing entry numbers */
+      const m = /^([A-Z0-9]+)-\d+$/.exec((data.records[0] || {}).id || '');
+      S.project.siglum = m ? m[1] : 'LAC';
+    }
     S.records = data.records.map(normalize);
   }
 
@@ -287,8 +387,73 @@ LC.Model = (function () {
   }
 
   return { newRecord, normalize, nextId, get, add, remove, touch, title, altTitles,
-    serialize, publicClone, heldBackCount, lapsedEmbargoes,
+    serialize, publicClone, heldBackCount, lapsedEmbargoes, setStatus,
+    sourceOf, addSource, removeSource, restsOn, restrictSource,
     eventOf, addEvent, removeEvent, loadData, reset };
+})();
+
+/* ---------- the lock: a passphrase over the file at rest ----------
+   The working file holds restricted testimony and, with the sources
+   register, real identities. Locking encrypts the browser autosave, the
+   live disk file, and the saved project file with AES-GCM under a key
+   derived from a passphrase (PBKDF2, 600,000 rounds). It protects the
+   file at rest: while the register is open here, it is open. Exports
+   (the finding aid, the spreadsheet, public data) are publications and
+   stay plain. */
+LC.Lock = (function () {
+  let key = null;            /* the derived AES key, held for the session */
+  let kdf = null;            /* { iterations, salt(b64) } for re-derivation */
+
+  const ITERATIONS = 600000;
+  const te = new TextEncoder(), td = new TextDecoder();
+  const b64 = buf => {
+    let s = '';
+    const b = new Uint8Array(buf);
+    for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+    return btoa(s);
+  };
+  const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+
+  async function derive(passphrase, kdfSpec) {
+    const base = await crypto.subtle.importKey('raw', te.encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', hash: 'SHA-256', salt: unb64(kdfSpec.salt), iterations: kdfSpec.iterations },
+      base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  }
+
+  const active = () => !!key;
+  const isEnvelope = data => data && data.format === 'mirl-lacuna-locked';
+
+  /* turn the lock on (or change the passphrase) */
+  async function set(passphrase) {
+    kdf = { iterations: ITERATIONS, salt: b64(crypto.getRandomValues(new Uint8Array(16))) };
+    key = await derive(passphrase, kdf);
+  }
+
+  function remove() { key = null; kdf = null; }
+
+  /* plaintext project JSON string -> envelope string */
+  async function seal(raw) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const data = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, te.encode(raw));
+    return JSON.stringify({
+      format: 'mirl-lacuna-locked', version: 1,
+      kdf: { name: 'PBKDF2', hash: 'SHA-256', iterations: kdf.iterations, salt: kdf.salt },
+      iv: b64(iv), data: b64(data),
+    });
+  }
+
+  /* envelope object + passphrase -> plaintext string; adopts the lock */
+  async function unseal(envelope, passphrase) {
+    const spec = { iterations: envelope.kdf.iterations, salt: envelope.kdf.salt };
+    const k = await derive(passphrase, spec);
+    const raw = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: unb64(envelope.iv) }, k, unb64(envelope.data));
+    key = k; kdf = spec;
+    return td.decode(raw);
+  }
+
+  return { active, isEnvelope, set, remove, seal, unseal };
 })();
 
 /* ---------- autosave in the browser ---------- */
@@ -298,30 +463,45 @@ LC.Store = (function () {
 
   function save() {
     clearTimeout(timer);
-    timer = setTimeout(() => {
+    timer = setTimeout(async () => {
       const raw = JSON.stringify(LC.Model.serialize(false));
+      let payload = raw;
+      if (LC.Lock.active()) {
+        try { payload = await LC.Lock.seal(raw); }
+        catch (e) { return LC.util.toast('Could not encrypt the autosave'); }
+      }
       try {
-        localStorage.setItem(KEY, raw);
+        localStorage.setItem(KEY, payload);
       } catch (e) {
         if (!warned) {
           warned = true;
           LC.util.toast('Too large to autosave here. Save your project file.');
         }
       }
-      LC.Disk.write(raw);
+      LC.Disk.write(payload);
     }, 400);
   }
+
+  /* returns true (loaded), false (nothing), or the locked envelope */
   function load() {
     try {
       const raw = localStorage.getItem(KEY);
       if (!raw) return false;
-      LC.Model.loadData(JSON.parse(raw));
+      const data = JSON.parse(raw);
+      if (LC.Lock.isEnvelope(data)) return data;
+      LC.Model.loadData(data);
       return true;
     } catch (e) { return false; }
   }
   function clear() { try { localStorage.removeItem(KEY); } catch (e) {} }
 
-  return { save, load, clear };
+  /* the current project as it should rest: sealed when locked */
+  async function payload() {
+    const raw = JSON.stringify(LC.Model.serialize(false));
+    return LC.Lock.active() ? LC.Lock.seal(raw) : raw;
+  }
+
+  return { save, load, clear, payload };
 })();
 
 /* ---------- a live file on disk (Chromium browsers) ----------
@@ -383,7 +563,7 @@ LC.Disk = (function () {
     });
     stored = null; failed = false;
     try { await kvSet('fileHandle', handle); } catch (e) {}
-    await write(JSON.stringify(LC.Model.serialize(false)), true);
+    await write(await LC.Store.payload(), true);
     LC.util.toast('Saving to ' + handle.name + ' as you work');
   }
 
@@ -392,7 +572,7 @@ LC.Disk = (function () {
     const perm = await stored.requestPermission({ mode: 'readwrite' });
     if (perm !== 'granted') return LC.util.toast('The browser did not allow it');
     handle = stored; stored = null; failed = false;
-    await write(JSON.stringify(LC.Model.serialize(false)), true);
+    await write(await LC.Store.payload(), true);
     LC.util.toast('Saving to ' + handle.name + ' as you work');
   }
 

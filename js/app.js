@@ -78,11 +78,128 @@ LC.App = (function () {
     if (line) line.textContent = 'A register of absent works' + (kept ? ' · kept by ' + kept : '');
   }
 
+  /* ---------- the lock ---------- */
+  function updateLockItem() {
+    const item = document.getElementById('lock-item');
+    if (!item) return;
+    if (!(window.crypto && crypto.subtle)) { item.style.display = 'none'; return; }
+    item.innerHTML = LC.Lock.active()
+      ? 'Change or remove the lock<small>the autosave, the disk file, and saved projects are encrypted</small>'
+      : 'Lock this register<small>a passphrase encrypts the file at rest; exports stay plain</small>';
+  }
+
+  function passField(label, ph) {
+    const input = U.h('input', { type: 'password', placeholder: ph || '', autocomplete: 'new-password' });
+    return { input, field: U.h('div', { class: 'field' }, U.h('label', null, label), input) };
+  }
+
+  function lockDialog() {
+    if (!(window.crypto && crypto.subtle)) return U.toast('This browser cannot encrypt here');
+    const body = U.h('div');
+    const err = U.h('div', { class: 'note', style: { color: 'var(--stamp)', minHeight: '18px' } });
+    if (!LC.Lock.active()) {
+      const p1 = passField('Passphrase'), p2 = passField('The same again');
+      body.append(
+        U.h('p', { class: 'hint', style: { marginTop: '12px' } },
+          'The passphrase encrypts the browser autosave, the live disk file, and saved project files. It protects the file at rest: while the register is open here, it is open. There is no recovery if the passphrase is lost. Exports (the finding aid, the spreadsheet, public data) are publications and stay plain.'),
+        p1.field, p2.field, err);
+      sheet('Lock this register', body, [
+        { label: 'Cancel', onclick: () => true },
+        {
+          label: 'Lock it', onclick: () => {
+            const a = p1.input.value, b = p2.input.value;
+            if (a.length < 8) { err.textContent = 'Use at least eight characters.'; return false; }
+            if (a !== b) { err.textContent = 'The two do not match.'; return false; }
+            LC.Lock.set(a).then(() => {
+              LC.Store.save();
+              updateLockItem();
+              U.toast('Locked: the file at rest is now encrypted');
+            });
+          },
+        },
+      ]);
+      setTimeout(() => p1.input.focus(), 60);
+    } else {
+      const p1 = passField('New passphrase', 'leave empty to keep the current one');
+      const p2 = passField('The same again');
+      body.append(
+        U.h('p', { class: 'hint', style: { marginTop: '12px' } },
+          'Set a new passphrase, or remove the lock and return the file at rest to plain JSON.'),
+        p1.field, p2.field, err);
+      sheet('Change or remove the lock', body, [
+        { label: 'Cancel', onclick: () => true },
+        {
+          label: 'Remove the lock', danger: true, onclick: () => {
+            if (!confirm('Remove the lock? The autosave and future saves return to plain, readable JSON.')) return false;
+            LC.Lock.remove();
+            LC.Store.save();
+            updateLockItem();
+            U.toast('Unlocked: the file at rest is plain again');
+          },
+        },
+        {
+          label: 'Set new passphrase', onclick: () => {
+            const a = p1.input.value, b = p2.input.value;
+            if (a.length < 8) { err.textContent = 'Use at least eight characters.'; return false; }
+            if (a !== b) { err.textContent = 'The two do not match.'; return false; }
+            LC.Lock.set(a).then(() => {
+              LC.Store.save();
+              U.toast('The passphrase is changed');
+            });
+          },
+        },
+      ]);
+    }
+  }
+
+  /* a modal that will not be clicked away: the register is locked */
+  function unlockOverlay(envelope, onOpen, cancellable) {
+    const overlay = U.h('div', { class: 'sheet-overlay' });
+    const err = U.h('div', { class: 'note', style: { color: 'var(--stamp)', minHeight: '18px' } });
+    const pass = U.h('input', { type: 'password', placeholder: 'passphrase', autocomplete: 'current-password', style: { width: '100%' } });
+    const tryOpen = () => {
+      err.textContent = '';
+      LC.Lock.unseal(envelope, pass.value).then(raw => {
+        overlay.remove();
+        onOpen(raw);
+      }).catch(() => {
+        err.textContent = 'That passphrase does not open it.';
+        pass.select();
+      });
+    };
+    pass.addEventListener('keydown', e => { if (e.key === 'Enter') tryOpen(); });
+    const acts = U.h('div', { class: 'dlg-actions' });
+    if (cancellable) {
+      acts.append(U.h('button', { class: 'btn quiet', onclick: () => overlay.remove() }, 'Cancel'));
+    } else {
+      acts.append(U.h('button', {
+        class: 'btn quiet', onclick: () => {
+          if (confirm('Set the locked register aside and start empty? Nothing is deleted: it stays locked in this browser and in any file you saved, and unlocking later brings it back.')) {
+            overlay.remove();
+            LC.Model.reset();
+            route();
+          }
+        },
+      }, 'Start empty instead'));
+    }
+    acts.append(U.h('button', { class: 'btn', onclick: tryOpen }, 'Unlock'));
+    overlay.append(U.h('div', { class: 'paper-dialog', style: { maxWidth: '460px' } },
+      U.h('h3', null, 'This register is locked'),
+      U.h('div', { class: 'dlg-body' },
+        U.h('p', { class: 'hint', style: { margin: '12px 0 16px' } }, 'Its passphrase opens it; nothing shows until then.'),
+        U.h('div', { class: 'field' }, pass), err),
+      acts));
+    document.body.append(overlay);
+    setTimeout(() => pass.focus(), 60);
+  }
+
   /* ---------- project I/O ---------- */
   function newProject() {
     if (!confirm('Start a new, empty register? If the current one matters, save its project file first.')) return;
+    LC.Lock.remove();
     LC.Model.reset();
     LC.Store.save();
+    updateLockItem();
     S.route.id = null;
     location.hash = '#/register';
     route();
@@ -92,16 +209,24 @@ LC.App = (function () {
   function openProject(file) {
     const reader = new FileReader();
     reader.onload = () => {
-      try {
-        LC.Model.loadData(JSON.parse(reader.result));
-        LC.Store.save();
-        S.route.id = null;
-        location.hash = '#/register';
-        route();
-        U.toast('Project opened');
-      } catch (e) {
-        U.toast(e.message || 'That file could not be read as a Lacuna project');
-      }
+      let data;
+      try { data = JSON.parse(reader.result); }
+      catch (e) { return U.toast('That file could not be read as a Lacuna project'); }
+      const finish = raw => {
+        try {
+          LC.Model.loadData(typeof raw === 'string' ? JSON.parse(raw) : raw);
+          LC.Store.save();
+          updateLockItem();
+          S.route.id = null;
+          location.hash = '#/register';
+          route();
+          U.toast('Project opened' + (LC.Lock.active() ? ' (locked; this session keeps its passphrase)' : ''));
+        } catch (e) {
+          U.toast(e.message || 'That file could not be read as a Lacuna project');
+        }
+      };
+      if (LC.Lock.isEnvelope(data)) unlockOverlay(data, finish, true);
+      else finish(data);
     };
     reader.readAsText(file);
   }
@@ -204,7 +329,8 @@ LC.App = (function () {
         route();
         U.toast('Merged: ' + plan.newRecords.length + ' new, ' +
           plan.conflicts.length + ' reconciled, ' + plan.identical + ' identical' +
-          (plan.newEvents.length ? ', ' + plan.newEvents.length + ' events' : ''));
+          (plan.newEvents.length ? ', ' + plan.newEvents.length + ' events' : '') +
+          (plan.newSources.length ? ', ' + plan.newSources.length + ' sources' : ''));
         if (plan.newRecords.length) setTimeout(() => offerDuplicates(plan.newRecords.map(r => r.id)), 400);
       };
       const choices = {};
@@ -233,9 +359,14 @@ LC.App = (function () {
                   LC.Model.title(rec) + ' · ' + LC.vocab.statusOf(rec.status).label.toLowerCase() +
                   (rec.modified ? ' · ' + rec.modified.slice(0, 10) : '')))));
         };
+        const bothRadio = U.h('input', { type: 'radio', name: 'cf-' + c.id, value: 'both' });
+        bothRadio.addEventListener('change', () => { choices[c.id] = 'both'; });
         body.append(U.h('div', { class: 'conflict' },
           U.h('div', { class: 'cid' }, c.id),
-          U.h('div', { class: 'sides' }, side('mine', 'Mine', c.local), side('theirs', 'Theirs', c.incoming))));
+          U.h('div', { class: 'sides' }, side('mine', 'Mine', c.local), side('theirs', 'Theirs', c.incoming)),
+          U.h('label', { style: { display: 'flex', gap: '10px', alignItems: 'baseline', marginTop: '10px', cursor: 'pointer', fontSize: '15px', color: 'var(--ink-2)' } },
+            bothRadio,
+            U.h('span', null, 'Keep both: these are different works; theirs joins under a fresh number'))));
       });
       sheet('Reconcile the two registers', body, [
         { label: 'Cancel', onclick: () => true },
@@ -270,6 +401,94 @@ LC.App = (function () {
     const input = document.getElementById('file-input');
     input.value = '';
     input.click();
+  }
+
+  /* ---------- the people who remember ----------
+     The manager for narrators and sources: aliases publish, identities do
+     not, and the view that matters when consent shifts: everything that
+     rests on this person's word, restrictable at once. */
+  function sourcesDialog() {
+    const body = U.h('div');
+
+    const srcField = (s, key, label, ph, note) => {
+      const input = U.h('input', { type: 'text', value: s[key] || '', placeholder: ph || '', dir: 'auto' });
+      input.addEventListener('input', () => {
+        s[key] = input.value;
+        S.project.modified = U.nowISO();
+        LC.Store.save();
+      });
+      const f = U.h('div', { class: 'field' }, U.h('label', null, label), input);
+      if (note) f.append(U.h('div', { class: 'note' }, note));
+      return f;
+    };
+
+    const redraw = () => {
+      body.innerHTML = '';
+      body.append(U.h('p', { class: 'hint', style: { marginTop: '12px' } },
+        'The people the register rests on. Only the alias is ever published or exported; the identity, contact, and consent notes stay in the working file. Link evidence and sightings to a source from the cataloguer’s desk.'));
+      if (!(S.project.sources || []).length) {
+        body.append(U.h('p', { class: 'hint', style: { fontStyle: 'italic' } }, 'No sources are recorded yet.'));
+      }
+      (S.project.sources || []).forEach(s => {
+        const rests = LC.Model.restsOn(s.id);
+        const item = U.h('div', { class: 'item' },
+          U.h('div', { class: 'item-head' },
+            U.h('span', { class: 'n' }, s.id),
+            U.h('span', { class: 'sp' }),
+            U.h('button', {
+              class: 'act', onclick: () => {
+                const cleared = LC.Model.removeSource(s.id);
+                LC.Store.save();
+                U.toast('Source removed' + (cleared ? '; unlinked from ' + cleared + (cleared === 1 ? ' item' : ' items') : ''));
+                redraw();
+              },
+            }, 'Remove')),
+          srcField(s, 'alias', 'Alias, as published', 'e.g. the studio’s apprentice',
+            'The public handle; choose one that cannot identify them.'),
+          U.h('div', { class: 'row2' },
+            srcField(s, 'name', 'Identity', 'name; never published'),
+            srcField(s, 'contact', 'Contact', 'never published')),
+          srcField(s, 'consent', 'Consent', 'what they agreed to, and when',
+            'In their words where possible: what may be used, what must wait, until when.'),
+          srcField(s, 'note', 'Note', ''));
+
+        const restsBox = U.h('div', { class: 'field' });
+        restsBox.append(U.h('label', null, 'Rests on their word'));
+        if (!rests.length) {
+          restsBox.append(U.h('div', { class: 'note' }, 'Nothing yet.'));
+        } else {
+          rests.forEach(x => {
+            restsBox.append(U.h('div', { style: { display: 'flex', gap: '12px', alignItems: 'baseline', padding: '4px 0' } },
+              U.h('button', {
+                class: 'act', style: { color: 'var(--stamp)' },
+                onclick: () => { document.querySelector('.sheet-overlay').remove(); location.hash = '#/entry/' + x.record.id; },
+              }, x.record.id),
+              U.h('span', { style: { fontSize: '15px', color: 'var(--ink-2)' } },
+                LC.Model.title(x.record) + ' · ' + x.kind +
+                (x.kind === 'evidence' ? ' (' + x.item.consent + ')' : ''))));
+          });
+          const pub = rests.filter(x => x.kind === 'evidence' && x.item.consent === 'public').length;
+          if (pub) {
+            restsBox.append(U.h('div', { class: 'add-line' }, U.h('button', {
+              class: 'btn danger', onclick: () => {
+                if (!confirm('Mark all ' + pub + ' public evidence item' + (pub === 1 ? '' : 's') + ' from this source as restricted? Use this when their consent is withdrawn or in doubt.')) return;
+                const n = LC.Model.restrictSource(s.id, 'restricted');
+                LC.Store.save();
+                U.toast(n + (n === 1 ? ' item' : ' items') + ' restricted; nothing of theirs will publish');
+                redraw();
+              },
+            }, 'Restrict everything public of theirs')));
+          }
+        }
+        item.append(restsBox);
+        body.append(item);
+      });
+      body.append(U.h('div', { class: 'add-line' }, U.h('button', {
+        class: 'act', onclick: () => { LC.Model.addSource(); LC.Store.save(); redraw(); },
+      }, '+ Add a source')));
+    };
+    redraw();
+    sheet('Sources and narrators', body, [{ label: 'Done', onclick: () => { route(); } }]);
   }
 
   /* ---------- the live file on disk ---------- */
@@ -318,12 +537,23 @@ LC.App = (function () {
 
   /* ---------- boot ---------- */
   function boot() {
-    if (!LC.Store.load()) {
+    const loaded = LC.Store.load();
+    if (loaded === false) {
       if (window.LC.SAMPLE) {
         try { LC.Model.loadData(JSON.parse(JSON.stringify(LC.SAMPLE))); } catch (e) { LC.Model.reset(); }
       } else {
         LC.Model.reset();
       }
+    } else if (loaded !== true) {
+      /* a locked register waits in the autosave: ask before showing anything */
+      setTimeout(() => unlockOverlay(loaded, raw => {
+        try {
+          LC.Model.loadData(JSON.parse(raw));
+          updateLockItem();
+          route();
+          U.toast('Unlocked');
+        } catch (e) { U.toast('The locked file could not be read'); }
+      }, false), 50);
     }
 
     document.querySelectorAll('nav.folio button[data-view]').forEach(b => {
@@ -346,6 +576,8 @@ LC.App = (function () {
       if (act === 'new') newProject();
       else if (act === 'open') { const i = document.getElementById('project-input'); i.value = ''; i.click(); }
       else if (act === 'save') LC.Exporters.saveProject();
+      else if (act === 'lock') lockDialog();
+      else if (act === 'sources') sourcesDialog();
       else if (act === 'disk') diskAction();
       else if (act === 'csv') { const i = document.getElementById('csv-input'); i.value = ''; i.click(); }
       else if (act === 'merge') { const i = document.getElementById('merge-input'); i.value = ''; i.click(); }
@@ -360,6 +592,10 @@ LC.App = (function () {
       else if (act === 'json') LC.Exporters.publicJSON();
       else if (act === 'aid') LC.Exporters.findingAid();
       else if (act === 'book') LC.Exporters.printBook();
+      else if (act === 'notice') {
+        if (S.route.view !== 'entry' || !LC.Record.current) U.toast('Open an entry first; the notice prints one entry');
+        else LC.Exporters.printNotice(LC.Record.current);
+      }
       else if (act === 'print') window.print();
     });
 
@@ -394,6 +630,7 @@ LC.App = (function () {
 
     /* remember a live file from last session, if there was one */
     updateDiskItem();
+    updateLockItem();
     LC.Disk.init().then(updateDiskItem).catch(() => {});
 
     /* offline: a service worker caches the tool after the first visit */

@@ -114,6 +114,20 @@ a printed register ends.
   the form and the notice.
 - **Last seen**: a date, a place, and a source, the most recent moment anyone
   can vouch for.
+- **Sightings and reports**: a dated dossier under the entry ("offered for
+  sale, 1977", "seen in a private collection, 2003"), each report marked as
+  *supporting* or *complicating* the stated status, because post-conflict
+  knowledge is plural and the register should hold contradiction rather than
+  resolve it away.
+- **A history of its fate.** When a status changes, the old one is kept, with
+  the date and a line on why: the ledger never erases. A recovery shows as a
+  recovery ("formerly unlocated, to June 2026").
+- **An investigation log**: dated working notes on the search itself, where
+  the negative results live (the deposit with no list, the office that says
+  no file exists). These never leave the working file.
+- **Extent**: an optional count (1,140 glass plates; 40 albums) so a
+  collection-level entry can be counted in objects, not just entries, and
+  statistics can answer "how much was lost" the way a loss assessment must.
 - **A loss event**: which fire, sale, flood, or clearance the entry belongs
   to, drawn from the project's event list.
 - **Relations**: typed links to other entries (part of, contains, copy of,
@@ -162,6 +176,42 @@ people and sites; nothing is published until you say how.
 
 ---
 
+## The people who remember
+
+Research on disappeared archives runs on people, and the people matter more
+than the paperwork. Under **Project · Sources and narrators**, the register
+keeps the people it rests on: each with a **publication alias** ("the
+studio's apprentice"), an identity and contact that **never publish or
+export**, and a consent note in their own terms: what may be used, what must
+wait, until when.
+
+Link evidence and sightings to their narrator from the cataloguer's desk,
+and the notice credits the alias ("told by the studio's apprentice"). Then
+the view every researcher eventually needs is one click away: **everything
+that rests on this person's word**, across the whole register, with a single
+action to restrict all of their public material when consent is withdrawn or
+in doubt. Consent is a relationship over time, not a checkbox, and the
+register knows whom it has relationships with.
+
+---
+
+## Locking the file
+
+The working file holds restricted testimony and, now, real identities. From
+**Project · Lock this register**, a passphrase encrypts the file at rest:
+the browser autosave, the live disk file, and every saved project file
+(AES-GCM, with the key derived from your passphrase at 600,000 rounds of
+PBKDF2, all in the browser). Opening a locked register asks for the
+passphrase and shows nothing until it is given.
+
+Plainly, what it does and does not do: it protects the file **at rest**, on
+a laptop that is lost, copied, or opened at a checkpoint. While the register
+is open in your browser, it is open. There is no recovery if the passphrase
+is lost. And exports are publications, so the finding aid, the spreadsheet,
+and the public data remain plain by design.
+
+---
+
 ## Surviving copies
 
 Where some version of a lost work still exists, list its holders: institution,
@@ -185,7 +235,12 @@ a dealer's list, an accession ledger. From the **Project** menu:
 - **Merge a project (.json).** Two people catalogue in parallel, no server
   involved, then one merges the other's file. New entries are added; where
   the same entry differs in both registers, the conflicts are laid out side
-  by side and you choose which version stands, with the newer one suggested.
+  by side and you choose which version stands, with the newer one suggested,
+  or **keep both** when the same number turns out to name two different
+  works: theirs joins under a fresh number, with its relations following.
+  Each register can set its own **mark (siglum)** in the front matter, the
+  way manuscripts carry sigla, so registers cite one another without
+  colliding.
 - After either, Lacuna quietly flags **possible duplicates**: new entries
   whose title and creator match an existing one, with a one-click choice to
   relate them, strike the newcomer as a duplicate, or keep both.
@@ -224,6 +279,10 @@ From the **Export** menu:
   matter, one notice per page, and the register and index as appendices: the
   thing communities hand each other at meetings. Consent applies as in every
   export.
+- **Notice for circulation**: one open entry as a one-page printed appeal,
+  with its image, when and where it was last seen, and whom to tell. The
+  memorial notice mourns; this one asks. Evidence consent and place
+  publication apply as everywhere.
 - **Spreadsheet (.csv)** of the register, for sorting and counting elsewhere.
 - **Public data (.json)**, the machine-readable register with consent applied.
 - **Print this view**, for paper copies of the register or a single notice.
@@ -273,9 +332,13 @@ To regenerate the sample, run `python3 samples/make-samples.py` (needs
   inverse computed), narrative, tags, a location whose `publish` field is
   `withheld`, `approximate`, or `exact`, an evidence list (type, file
   metadata or URL, sha-256, rights, consent with an optional embargo `until`
-  date, note, thumbnail), surviving copies (institution, identifier, IIIF
-  and web addresses), and the `publish` and `struck` flags. Files saved by
-  earlier versions load cleanly; the old boolean `safe` becomes `exact`.
+  date, optional `sourceId`, note, thumbnail), dated `sightings` with a
+  bearing on the status, an append-style `statusHistory`, a private `log`,
+  an `extent` (amount and unit), surviving copies (institution, identifier,
+  IIIF and web addresses), and the `publish` and `struck` flags. The project
+  also carries `sources` (alias, identity, contact, consent; only the alias
+  survives into any export) and a `siglum` for entry numbering. Files saved
+  by earlier versions load cleanly; the old boolean `safe` becomes `exact`.
 - **Autosave** uses `localStorage`, debounced; the project file on disk is
   the durable copy. Hand-edited or older files are normalized on load.
 - **Hashing** uses WebCrypto's SHA-256 with a small pure-JS fallback.
@@ -308,6 +371,11 @@ To regenerate the sample, run `python3 samples/make-samples.py` (needs
   per-string direction detection in the rendered notice; Arabic text is set
   in Noto Naskh Arabic, vendored alongside Spectral and IBM Plex Mono in
   `fonts/`.
+- **The lock** is WebCrypto end to end: PBKDF2 (SHA-256, 600,000 iterations,
+  random salt) derives an AES-GCM 256 key that seals the autosave, the disk
+  file, and saved projects into a `mirl-lacuna-locked` envelope. The key
+  lives only in memory for the session; nothing about the passphrase is
+  stored anywhere.
 - **The live file on disk** uses the File System Access API where it exists,
   with the file handle kept in IndexedDB so the same file can be resumed
   (with your permission) next session. The browser autosave is unaffected
@@ -354,7 +422,7 @@ This repository carries a [`CITATION.cff`](CITATION.cff) file, so GitHub's
 you a reference in APA or BibTeX form. In a note, cite it as:
 
 > Jeff O'Brien, *MIRL Lacuna: a catalogue of an absent archive*, version
-> 1.3.0, Material / Image Research Lab, UC Santa Barbara, 2026,
+> 1.4.0, Material / Image Research Lab, UC Santa Barbara, 2026,
 > https://github.com/mirl-ucsb/mirl-lacuna.
 
 ---

@@ -34,6 +34,9 @@
         <button data-act="save">Save project (.json)<small>your full working file; restricted evidence stays in it</small></button>
         <button data-act="open">Open project (.json)</button>
         <button data-act="disk" id="disk-item">Keep the file on disk<small>save continuously to a .json you choose, alongside the browser autosave</small></button>
+        <button data-act="lock" id="lock-item">Lock this register<small>a passphrase encrypts the file at rest; exports stay plain</small></button>
+        <hr>
+        <button data-act="sources">Sources and narrators<small>the people the register rests on; aliases publish, identities never do</small></button>
         <hr>
         <button data-act="csv">Import entries (.csv)<small>an old inventory becomes draft entries, held back until published</small></button>
         <button data-act="merge">Merge a project (.json)<small>a colleague's register, reconciled entry by entry</small></button>
@@ -48,6 +51,7 @@
       <div class="menu hidden" id="export-menu">
         <button data-act="aid">Finding aid (.html)<small>one self-contained page: register, notices, atlas</small></button>
         <button data-act="book">Print as a memorial book<small>a cover leaf, one notice per page, the register and index as appendices</small></button>
+        <button data-act="notice">Notice for circulation (print)<small>the open entry as a one-page appeal: last seen, whom to tell</small></button>
         <button data-act="csv">Register as spreadsheet (.csv)</button>
         <button data-act="json">Public data (.json)</button>
         <hr>

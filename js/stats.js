@@ -39,12 +39,21 @@ LC.Stats = (function () {
     const located = rs.filter(r => r.location && (r.location.place || (typeof r.location.lat === 'number' && typeof r.location.lon === 'number')));
     const publishable = located.filter(r => r.location.publish !== 'withheld');
     const published = rs.filter(r => r.publish).length;
+    /* extents let collection-level entries answer in objects, not entries */
+    const sumExt = rows => rows.reduce((a, r) =>
+      a + ((r.extent && typeof r.extent.amount === 'number') ? r.extent.amount : 0), 0);
+    const objTotal = sumExt(rs);
+    const objSub = rows => {
+      const n = sumExt(rows);
+      return n > 0 ? '<div class="n-sub">' + n.toLocaleString('en-US') + ' objects</div>' : '';
+    };
 
     let h = '<h2 class="head">Statistics</h2>' +
       '<p class="subhead">what the register holds, counted</p>';
 
     h += '<div class="stats-grid">' +
       cell(rs.length, rs.length === 1 ? 'entry' : 'entries') +
+      (objTotal > 0 ? cell(objTotal.toLocaleString('en-US'), 'objects, where counted') : '') +
       (opts.publicOnly ? '' : cell(published, 'marked publish')) +
       cell(evidence.length, 'items of evidence') +
       cell(copies.length, 'surviving copies') +
@@ -56,11 +65,11 @@ LC.Stats = (function () {
       h += '<h3 class="head" style="font-size:19px;margin-top:40px">By loss event</h3>';
       h += '<table class="tally">';
       events.forEach(ev => {
-        const n = rs.filter(r => r.eventId === ev.id).length;
+        const group = rs.filter(r => r.eventId === ev.id);
         h += '<tr><td class="k" style="width:300px"><span style="font-weight:500">' + U.esc(ev.name || 'unnamed event') + '</span>' +
           (ev.date ? ' <span class="cert" style="font-size:14.5px">' + U.esc(ev.date) + '</span>' : '') + '</td>' +
-          '<td class="bar" style="color:var(--stamp)">' + tallySVG(n) + '</td>' +
-          '<td class="n">' + n + '</td></tr>';
+          '<td class="bar" style="color:var(--stamp)">' + tallySVG(group.length) + '</td>' +
+          '<td class="n">' + group.length + objSub(group) + '</td></tr>';
       });
       const unassigned = rs.filter(r => !r.eventId).length;
       if (unassigned) {
@@ -74,10 +83,10 @@ LC.Stats = (function () {
     h += '<h3 class="head" style="font-size:19px;margin-top:40px">By status</h3>';
     h += '<table class="tally">';
     LC.vocab.STATUS.forEach(st => {
-      const n = rs.filter(r => r.status === st.key).length;
+      const group = rs.filter(r => r.status === st.key);
       h += '<tr><td class="k"><span class="mark ' + st.cls + '">' + U.esc(st.label) + '</span></td>' +
-        '<td class="bar ' + st.cls + '">' + tallySVG(n) + '</td>' +
-        '<td class="n">' + n + '</td></tr>';
+        '<td class="bar ' + st.cls + '">' + tallySVG(group.length) + '</td>' +
+        '<td class="n">' + group.length + objSub(group) + '</td></tr>';
     });
     h += '</table>';
 

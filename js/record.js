@@ -11,6 +11,13 @@ LC.Tombstone = (function () {
 
   function dirAttr(s) { return U.isRTL(s) ? ' dir="rtl"' : ''; }
 
+  /* the public handle of a narrator; identities stay in the working file */
+  function aliasOf(sourceId, p) {
+    if (!sourceId) return '';
+    const s = ((p && p.sources) || []).find(x => x.id === sourceId);
+    return s ? (s.alias || 'a source') : '';
+  }
+
   function fileMeta(e) {
     const bits = [];
     if (e.file && e.file.name) {
@@ -26,6 +33,7 @@ LC.Tombstone = (function () {
   }
 
   function evidenceHTML(r, opts) {
+    const p = opts.project || LC.state.project;
     const all = r.evidence || [];
     const shown = opts.publicOnly ? all.filter(e => e.consent === 'public') : all;
     const withheld = all.length - all.filter(e => e.consent === 'public').length;
@@ -41,6 +49,8 @@ LC.Tombstone = (function () {
         if (e.label) h += '<div class="ev-label"' + dirAttr(e.label) + '>' + U.esc(e.label) + '</div>';
         const meta = fileMeta(e);
         if (meta) h += '<div class="ev-meta">' + meta + '</div>';
+        const alias = aliasOf(e.sourceId, p);
+        if (alias) h += '<div class="ev-meta">told by ' + U.esc(alias) + '</div>';
         if (e.note) h += '<div class="ev-note"' + dirAttr(e.note) + '>' + U.esc(e.note) + '</div>';
         if (e.thumb && (!opts.publicOnly || e.consent === 'public')) h += '<img class="ev-thumb" src="' + e.thumb + '" alt="">';
         const lapsed = e.consent === 'embargoed' && e.until && e.until <= new Date().toISOString().slice(0, 10);
@@ -77,6 +87,24 @@ LC.Tombstone = (function () {
         h += '<button class="act" data-look="' + U.esc(c.id) + '">Look</button>';
       }
       h += '</td></tr><tr class="copy-viewer-row" data-viewer-for="' + U.esc(c.id) + '" style="display:none"><td colspan="3"></td></tr>';
+    });
+    return h + '</table></div>';
+  }
+
+  /* dated reports about the thing: the dossier that holds contradiction */
+  function sightingsHTML(r, opts) {
+    const p = opts.project || LC.state.project;
+    const xs = r.sightings || [];
+    if (!xs.length) return '';
+    let h = '<div class="ts-sect"><h3>Sightings and reports</h3><table class="ev-table">';
+    xs.forEach((x, i) => {
+      const alias = aliasOf(x.sourceId, p);
+      h += '<tr><td class="kind" style="width:120px;padding-top:13px">' + U.esc(x.date || 'undated') + '</td><td>';
+      h += '<div class="ev-label">' + U.esc(x.kind) + (x.place ? ' · ' + U.esc(x.place) : '') + '</div>';
+      const meta = [alias ? 'told by ' + U.esc(alias) : ''].filter(Boolean).join(' · ');
+      if (meta) h += '<div class="ev-meta">' + meta + '</div>';
+      if (x.note) h += '<div class="ev-note"' + dirAttr(x.note) + '>' + U.esc(x.note) + '</div>';
+      h += '</td><td><span class="bearing ' + U.esc(x.bearing) + '">' + U.esc(x.bearing) + '</span></td></tr>';
     });
     return h + '</table></div>';
   }
@@ -141,7 +169,17 @@ LC.Tombstone = (function () {
     h += '<dl class="ts-fields">';
     const row = (dt, dd) => dd ? '<div class="ts-row"><dt>' + dt + '</dt><dd>' + dd + '</dd></div>' : '';
     h += row('Originating collection', U.esc(r.origin));
+    if (r.extent && typeof r.extent.amount === 'number') {
+      h += row('Extent', r.extent.amount.toLocaleString('en-US') + (r.extent.unit ? ' ' + U.esc(r.extent.unit) : ''));
+    }
     h += row('Condition of record', '<span class="cert"><span class="pt">' + cert.pt + '</span>' + cert.label + '</span> · ' + U.esc(st.label.toLowerCase()));
+    if ((r.statusHistory || []).length) {
+      const past = r.statusHistory.map(x =>
+        U.esc(LC.vocab.statusOf(x.status).label.toLowerCase()) +
+        (x.until ? ', to ' + U.esc(x.until) : '') +
+        (x.reason ? ' <span style="font-style:italic">(' + U.esc(x.reason) + ')</span>' : '')).join(' · ');
+      h += row('Formerly', '<span class="cert" style="font-style:normal">' + past + '</span>');
+    }
     const seen = [r.lastSeen.date, r.lastSeen.place].filter(s => s && s.trim()).join(', ');
     h += row('Last seen', U.esc(seen) + (r.lastSeen.source ? (seen ? ' · ' : '') + '<span style="font-style:italic">' + U.esc(r.lastSeen.source) + '</span>' : ''));
     const ev = r.eventId && (p.events || []).find(x => x.id === r.eventId);
@@ -175,6 +213,7 @@ LC.Tombstone = (function () {
     }
 
     h += evidenceHTML(r, opts);
+    h += sightingsHTML(r, opts);
     h += copiesHTML(r, opts);
     h += relationsHTML(r, opts);
 
@@ -389,14 +428,33 @@ LC.Desk = (function () {
     return sect('Titles', 'in any language; right-to-left scripts set themselves', box, add);
   }
 
-  /* ----- status and certainty ----- */
+  /* ----- status and certainty; a change of fate is kept, not overwritten ----- */
   function statusSect(r) {
+    const histBox = U.h('div');
+    const drawHistory = () => {
+      histBox.innerHTML = '';
+      if (!(r.statusHistory || []).length) return;
+      const wrap = U.h('div', { class: 'field' }, U.h('label', null, 'Formerly'));
+      r.statusHistory.forEach((x, i) => {
+        const reason = U.h('input', { type: 'text', value: x.reason || '', placeholder: 'why it changed', style: { flex: '1' } });
+        reason.addEventListener('input', () => { x.reason = reason.value; LC.App.entryChanged(r); });
+        wrap.append(U.h('div', { style: { display: 'flex', gap: '14px', alignItems: 'baseline', marginBottom: '10px' } },
+          U.h('span', { style: { fontFamily: 'var(--mono)', fontSize: '12.5px', color: 'var(--ink-2)', whiteSpace: 'nowrap' } },
+            LC.vocab.statusOf(x.status).label + (x.until ? ' · to ' + x.until : '')),
+          reason,
+          U.h('button', { class: 'act', onclick: () => { r.statusHistory.splice(i, 1); LC.App.entryChanged(r, true); drawHistory(); } }, 'Remove')));
+      });
+      wrap.append(U.h('div', { class: 'note' }, 'Former fates stay on the record; give each a line on why it changed.'));
+      histBox.append(wrap);
+    };
+
     const statusPick = U.h('div', { class: 'marks-pick' });
     LC.vocab.STATUS.forEach(st => {
       const b = U.h('button', { class: 'mark ' + st.cls + (r.status === st.key ? ' on' : '') }, st.label);
       b.addEventListener('click', () => {
-        r.status = st.key;
+        if (r.status !== st.key) LC.Model.setStatus(r, st.key);
         statusPick.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+        drawHistory();
         LC.App.entryChanged(r, true);
       });
       statusPick.append(b);
@@ -417,11 +475,24 @@ LC.Desk = (function () {
         U.h('option', { value: ev.id, selected: r.eventId === ev.id ? '' : null },
           (ev.name || 'unnamed event') + (ev.date ? ' (' + ev.date + ')' : ''))));
     evSel.addEventListener('change', () => { r.eventId = evSel.value || null; LC.App.entryChanged(r); });
+    drawHistory();
     return sect('What became of it', 'status, and how firmly it is known',
       U.h('div', { class: 'field' }, U.h('label', null, 'Status'), statusPick),
+      histBox,
       U.h('div', { class: 'field' }, U.h('label', null, 'Certainty'), certPick),
       U.h('div', { class: 'field' }, U.h('label', null, 'Loss event'), evSel,
         U.h('div', { class: 'note' }, 'Events (a fire, a sale, a flood) are kept on the Timeline folio; entries that share one are gathered there.')));
+  }
+
+  /* a narrator picker; identities show here, only aliases publish */
+  function sourceSelect(value, onchange) {
+    const sel = U.h('select', null,
+      U.h('option', { value: '' }, 'no source'),
+      ...(S.project.sources || []).map(s =>
+        U.h('option', { value: s.id, selected: value === s.id ? '' : null },
+          (s.alias || '(no alias yet)') + (s.name ? ' · ' + s.name : ''))));
+    sel.addEventListener('change', () => onchange(sel.value || null));
+    return sel;
   }
 
   /* ----- evidence ----- */
@@ -533,6 +604,9 @@ LC.Desk = (function () {
         U.h('div', { class: 'note' }, 'Only public evidence enters exports and the finding aid. Restricted and embargoed material never leaves this file.'))));
     item.append(untilField);
 
+    item.append(U.h('div', { class: 'field' }, U.h('label', null, 'On whose word'),
+      sourceSelect(e.sourceId, v => { e.sourceId = v; LC.App.entryChanged(r); }),
+      U.h('div', { class: 'note' }, 'Narrators are kept under Project, in Sources and narrators; only their alias is ever published.')));
     item.append(field(r, 'Note', () => e.note, v => { e.note = v; }, { ph: 'who provided it, what it shows' }));
     return item;
   }
@@ -585,6 +659,85 @@ LC.Desk = (function () {
           LC.App.entryChanged(r, true); redraw();
         },
       }, '+ Add a surviving copy')));
+  }
+
+  /* ----- sightings: dated reports, supporting or complicating the fate ----- */
+  function sightingsSect(r) {
+    const box = U.h('div');
+    const redraw = () => {
+      box.innerHTML = '';
+      r.sightings.forEach((x, i) => {
+        const kindSel = U.h('select', null, ...LC.vocab.SIGHTKIND.map(k =>
+          U.h('option', { value: k, selected: x.kind === k ? '' : null }, k)));
+        kindSel.addEventListener('change', () => { x.kind = kindSel.value; LC.App.entryChanged(r); });
+        const bearingPick = U.h('div', { class: 'marks-pick' });
+        LC.vocab.BEARING.forEach(b => {
+          const btn = U.h('button', { class: 'mark st-unlocated' + (x.bearing === b.key ? ' on' : '') }, b.label);
+          btn.addEventListener('click', () => {
+            x.bearing = b.key;
+            bearingPick.querySelectorAll('button').forEach(y => y.classList.toggle('on', y === btn));
+            LC.App.entryChanged(r);
+          });
+          bearingPick.append(btn);
+        });
+        const item = U.h('div', { class: 'item' },
+          U.h('div', { class: 'item-head' },
+            U.h('span', { class: 'n' }, 'Report ' + (i + 1)),
+            kindSel,
+            U.h('span', { class: 'sp' }),
+            U.h('button', { class: 'act', onclick: () => { r.sightings.splice(i, 1); LC.App.entryChanged(r, true); redraw(); } }, 'Remove')),
+          U.h('div', { class: 'row2' },
+            field(r, 'When', () => x.date, v => { x.date = v; }, { ph: 'e.g. spring 2003' }),
+            field(r, 'Where', () => x.place, v => { x.place = v; }, { ph: 'place, as fit to publish' })),
+          U.h('div', { class: 'row2' },
+            U.h('div', { class: 'field' }, U.h('label', null, 'On whose word'),
+              sourceSelect(x.sourceId, v => { x.sourceId = v; LC.App.entryChanged(r); })),
+            U.h('div', { class: 'field' }, U.h('label', null, 'Bearing on the status'), bearingPick)),
+          field(r, 'Note', () => x.note, v => { x.note = v; }, { ph: 'what was reported' }));
+        box.append(item);
+      });
+    };
+    redraw();
+    return sect('Sightings and reports', 'the dossier; it may hold contradiction',
+      box,
+      U.h('div', { class: 'add-line' }, U.h('button', {
+        class: 'act', onclick: () => {
+          r.sightings.push({ id: U.uid(), date: '', kind: 'seen', bearing: 'supports', place: '', sourceId: null, note: '' });
+          LC.App.entryChanged(r, true); redraw();
+        },
+      }, '+ Add a sighting or report')),
+      U.h('div', { class: 'note' },
+        'Sightings publish with the entry, under their narrators’ aliases. What must stay private belongs in the investigation log below.'));
+  }
+
+  /* ----- the investigation log: the search itself, dated; never exported ----- */
+  function logSect(r) {
+    const box = U.h('div');
+    const redraw = () => {
+      box.innerHTML = '';
+      r.log.forEach((x, i) => {
+        const date = U.h('input', { type: 'text', value: x.date || '', placeholder: 'date', style: { width: '120px', fontFamily: 'var(--mono)', fontSize: '13px' } });
+        date.addEventListener('input', () => { x.date = date.value; LC.App.entryChanged(r); });
+        const note = U.h('input', { type: 'text', value: x.note || '', placeholder: 'what was tried, who was asked, what came back', style: { flex: '1' }, dir: 'auto' });
+        note.addEventListener('input', () => { x.note = note.value; LC.App.entryChanged(r); });
+        box.append(U.h('div', { style: { display: 'flex', gap: '14px', alignItems: 'baseline', marginBottom: '12px' } },
+          date, note,
+          U.h('button', { class: 'act', onclick: () => { r.log.splice(i, 1); LC.App.entryChanged(r, true); redraw(); } }, 'Remove')));
+      });
+    };
+    redraw();
+    return sect('Investigation log', 'dated working notes; these never leave the working file',
+      box,
+      U.h('div', { class: 'add-line' }, U.h('button', {
+        class: 'act', onclick: () => {
+          r.log.push({ id: U.uid(), date: new Date().toISOString().slice(0, 10), note: '' });
+          LC.App.entryChanged(r, true); redraw();
+          const inputs = box.querySelectorAll('input[dir="auto"]');
+          if (inputs.length) inputs[inputs.length - 1].focus();
+        },
+      }, '+ Add a note')),
+      U.h('div', { class: 'note' },
+        'Negative results are findings: the deposit with no list, the office that says no file exists. Kept out of every export and the finding aid.'));
   }
 
   /* ----- relations: typed links; the other side is computed, not stored ----- */
@@ -682,7 +835,12 @@ LC.Desk = (function () {
         field(r, 'Date of the work', () => r.date, v => { r.date = v; }, { ph: 'e.g. 1934, or 1930s' })),
       U.h('div', { class: 'row2' },
         field(r, 'Medium', () => r.medium, v => { r.medium = v; }, { ph: 'e.g. gelatin silver print' }),
-        field(r, 'Originating archive / collection', () => r.origin, v => { r.origin = v; }, { ph: 'where it belonged' }))));
+        field(r, 'Originating archive / collection', () => r.origin, v => { r.origin = v; }, { ph: 'where it belonged' })),
+      U.h('div', { class: 'row2' },
+        field(r, 'Extent: how many', () => r.extent.amount == null ? '' : r.extent.amount,
+          v => { const n = parseFloat(String(v).replace(/[, ]/g, '')); r.extent.amount = isFinite(n) ? n : null; },
+          { ph: 'e.g. 1140', note: 'For collection-level entries, so statistics can count objects, not just entries.' }),
+        field(r, 'Extent: of what', () => r.extent.unit, v => { r.extent.unit = v; }, { ph: 'e.g. glass plates, albums' }))));
 
     desk.append(statusSect(r));
 
@@ -691,6 +849,8 @@ LC.Desk = (function () {
         field(r, 'When', () => r.lastSeen.date, v => { r.lastSeen.date = v; }, { ph: 'e.g. March 1976' }),
         field(r, 'Where', () => r.lastSeen.place, v => { r.lastSeen.place = v; }, { ph: 'place' })),
       field(r, 'On whose word', () => r.lastSeen.source, v => { r.lastSeen.source = v; }, { ph: 'the source: a witness, a catalogue, a photograph' })));
+
+    desk.append(sightingsSect(r));
 
     const loc = r.location;
     const locPick = U.h('div', { class: 'marks-pick' });
@@ -736,6 +896,7 @@ LC.Desk = (function () {
     desk.append(evidenceSect(r));
     desk.append(copiesSect(r));
     desk.append(relationsSect(r));
+    desk.append(logSect(r));
 
     desk.append(strikeSect(r));
 

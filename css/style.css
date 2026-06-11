@@ -292,6 +292,11 @@ table.register td .mark { font-size: 11.5px; padding: 4px 7px 3px; }
 .consent.public { color: var(--blue); }
 .consent.restricted, .consent.embargoed { color: var(--stamp); }
 
+/* what a sighting does to the stated fate */
+.bearing { font-family: var(--mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+.bearing.supports { color: var(--blue); }
+.bearing.complicates { color: var(--stamp); }
+
 /* relation cross-references read as catalogue see-also lines */
 a.rel-link { color: var(--ink); text-decoration: none; font-size: 16px; }
 a.rel-link:hover { color: var(--stamp); }
@@ -349,6 +354,7 @@ table.tally { width: 100%; border-collapse: collapse; margin-top: 8px; }
 table.tally td { padding: 13px 14px 13px 0; border-bottom: 1px solid var(--line); vertical-align: middle; }
 table.tally td.k { width: 220px; }
 table.tally td.n { width: 70px; font-family: var(--mono); font-size: 17px; font-weight: 500; text-align: right; color: var(--ink); }
+table.tally td.n .n-sub { font-size: 11px; font-weight: 400; color: var(--ink-3); letter-spacing: .04em; white-space: nowrap; }
 table.tally td.bar svg { display: block; }
 .stats-note { font-style: italic; color: var(--ink-2); margin-top: 18px; font-size: 15.5px; }
 
@@ -518,4 +524,19 @@ table.register th.sel, table.register td.sel { width: 36px; border-left: 0; text
     text-align: center; margin: 10px 0 24px; color: var(--ink);
   }
   #book .tombstone-wrap { margin-top: 10px; }
+
+  /* the notice for circulation: the searching counterpart to the memorial */
+  #book .notice-poster { border: 1.5px solid var(--ink); padding: 6px; margin-top: 30px; }
+  #book .notice-poster .inner { border: 1px solid var(--line-2); text-align: center; padding: 60px 50px 44px; }
+  #book .notice-poster .np-head { font-family: var(--mono); font-size: 14px; font-weight: 500; letter-spacing: .3em; text-transform: uppercase; color: var(--stamp); }
+  #book .notice-poster h1 { font-size: 34px; font-weight: 600; line-height: 1.25; margin: 22px 0 2px; }
+  #book .notice-poster .np-alt { font-size: 24px; margin-top: 4px; }
+  #book .notice-poster .np-vital { font-style: italic; color: var(--ink-2); font-size: 17px; margin-top: 10px; }
+  #book .notice-poster .np-img { display: block; margin: 28px auto 0; max-width: 60%; max-height: 320px; border: 1px solid var(--line-2); padding: 4px; background: var(--mat); }
+  #book .notice-poster .np-status { margin-top: 26px; }
+  #book .notice-poster .np-seen { font-size: 17px; color: var(--ink); margin-top: 12px; }
+  #book .notice-poster .np-rule { border: 0; border-top: 1px solid var(--line-2); width: 110px; margin: 30px auto; }
+  #book .notice-poster .np-ask { font-size: 18px; font-style: italic; color: var(--ink-2); }
+  #book .notice-poster .np-contact { font-family: var(--mono); font-size: 15px; margin-top: 10px; letter-spacing: .04em; }
+  #book .notice-poster .np-foot { margin-top: 46px; font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); }
 }

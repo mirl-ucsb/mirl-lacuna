@@ -8,11 +8,16 @@ LC.Exporters = (function () {
   const S = LC.state;
   const U = LC.util;
 
-  /* ---------- the working file (everything) ---------- */
-  function saveProject() {
+  /* ---------- the working file (everything; sealed when locked) ---------- */
+  async function saveProject() {
     const name = U.slug(S.project.title) + '.lacuna.json';
-    U.downloadText(name, JSON.stringify(LC.Model.serialize(false), null, 2), 'application/json');
-    U.toast('Project saved: ' + name);
+    let text = JSON.stringify(LC.Model.serialize(false), null, 2);
+    if (LC.Lock.active()) {
+      try { text = await LC.Lock.seal(text); }
+      catch (e) { return U.toast('Could not encrypt the file'); }
+    }
+    U.downloadText(name, text, 'application/json');
+    U.toast('Project saved: ' + name + (LC.Lock.active() ? ' (locked)' : ''));
   }
 
   /* ---------- public data (consent applied) ---------- */
@@ -30,7 +35,8 @@ LC.Exporters = (function () {
   function registerCSV() {
     const pub = LC.Model.publicClone();
     const head = ['id', 'title', 'parallel_titles', 'creator', 'date', 'medium', 'originating_collection',
-      'status', 'certainty', 'loss_event', 'last_seen_date', 'last_seen_place', 'last_seen_source',
+      'status', 'certainty', 'loss_event', 'extent_amount', 'extent_unit',
+      'last_seen_date', 'last_seen_place', 'last_seen_source',
       'narrative', 'tags', 'place', 'latitude', 'longitude', 'location_precision',
       'public_evidence', 'surviving_copies', 'relations'];
     const rows = pub.records.map(r => {
@@ -46,6 +52,8 @@ LC.Exporters = (function () {
         LC.vocab.statusOf(r.status).label,
         r.certainty,
         ev ? ev.name : '',
+        (r.extent && typeof r.extent.amount === 'number') ? r.extent.amount : '',
+        (r.extent && r.extent.unit) || '',
         r.lastSeen.date, r.lastSeen.place, r.lastSeen.source,
         r.note,
         (r.tags || []).join(' | '),
@@ -236,5 +244,61 @@ LC.Exporters = (function () {
     setTimeout(() => window.print(), 150);
   }
 
-  return { saveProject, publicJSON, registerCSV, findingAid, printBook };
+  /* ---------- a notice for circulation: the searching counterpart ----------
+     One entry as a printable appeal: what it was, when it was last seen,
+     whom to tell. Evidence consent and place publication apply as ever;
+     the cataloguer chooses to circulate it, so a held-back entry may print,
+     with a reminder. */
+  function printNotice(r) {
+    if (!r) return U.toast('Open an entry first');
+    const p = S.project;
+    const e = U.esc;
+    const st = LC.vocab.statusOf(r.status);
+    const title = LC.Model.title(r);
+    const alts = LC.Model.altTitles(r);
+    const photo = (r.evidence || []).find(x => x.consent === 'public' && x.thumb);
+    const seen = [r.lastSeen.date, r.lastSeen.place].filter(s => s && s.trim()).join(', ');
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const contact = p.contact || p.compiler || p.institution || '';
+
+    let h = '<div class="book-page"><div class="notice-poster"><div class="inner">';
+    h += '<div class="np-head">Notice · sought</div>';
+    h += '<h1' + (U.isRTL(title) ? ' dir="rtl"' : '') + '>' + e(title) + '</h1>';
+    alts.forEach(a => {
+      h += '<div class="np-alt"' + (U.isRTL(a.text) ? ' dir="rtl"' : '') + '>' + e(a.text) + '</div>';
+    });
+    const vital = [r.creator, r.medium, r.date].filter(s => s && s.trim()).join(' · ');
+    if (vital) h += '<div class="np-vital">' + e(vital) + '</div>';
+    if (photo) h += '<img class="np-img" src="' + photo.thumb + '" alt="">';
+    h += '<div class="np-status"><span class="mark ' + st.cls + '">' + e(st.label) + '</span></div>';
+    if (seen) h += '<div class="np-seen">Last seen ' + e(seen) +
+      (r.lastSeen.source ? ', <span style="font-style:italic">' + e(r.lastSeen.source) + '</span>' : '') + '</div>';
+    if (r.extent && typeof r.extent.amount === 'number') {
+      h += '<div class="np-seen">' + r.extent.amount.toLocaleString('en-US') + ' ' + e(r.extent.unit || 'items') + '</div>';
+    }
+    h += '<hr class="np-rule">';
+    h += '<div class="np-ask">If you know anything of it, however small:</div>';
+    if (contact) h += '<div class="np-contact">' + e(contact) + '</div>';
+    h += '<div class="np-foot">' + e(p.title || 'Untitled register') + ' · entry ' + e(r.id) + ' · ' + e(today) + '</div>';
+    h += '</div></div></div>';
+
+    let book = document.getElementById('book');
+    if (!book) {
+      book = document.createElement('div');
+      book.id = 'book';
+      document.body.append(book);
+    }
+    book.innerHTML = h;
+    document.body.classList.add('book-mode');
+    const cleanup = () => {
+      document.body.classList.remove('book-mode');
+      book.innerHTML = '';
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+    if (!r.publish) U.toast('This entry is held back; the notice still honours evidence consent');
+    setTimeout(() => window.print(), 150);
+  }
+
+  return { saveProject, publicJSON, registerCSV, findingAid, printBook, printNotice };
 })();

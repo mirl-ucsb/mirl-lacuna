@@ -1,0 +1,36 @@
+{
+  "title": "MIRL Lacuna: a catalogue of an absent archive",
+  "description": "A no-build, local-first cataloguer for archives that no longer exist: destroyed, damaged, looted, dispersed, and unlocated works recorded with evidence hashes, consent states down to the entry, a register of narrators whose identities never publish, dated sightings, status histories, loss events, typed relations, surviving copies (IIIF), a memorial register, a timeline, an atlas of consented places, CSV import, serverless merge, fixity checks, passphrase encryption of the working file, and self-contained finding-aid and memorial-book exports. Arabic and right-to-left ready.",
+  "creators": [
+    {
+      "name": "O'Brien, Jeff",
+      "affiliation": "Material / Image Research Lab, Department of History of Art & Architecture, University of California, Santa Barbara"
+    }
+  ],
+  "license": "MIT",
+  "upload_type": "software",
+  "access_right": "open",
+  "keywords": [
+    "art history",
+    "digital humanities",
+    "cultural heritage",
+    "destroyed archives",
+    "provenance",
+    "lost art",
+    "IIIF",
+    "data sovereignty",
+    "minimal computing"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/mirl-ucsb/mirl-lacuna",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://mirl-ucsb.github.io/mirl-lacuna/",
+      "relation": "isIdenticalTo",
+      "scheme": "url"
+    }
+  ]
+}

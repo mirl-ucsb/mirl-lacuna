@@ -232,6 +232,11 @@ table.register tr.entry.struck .mark, table.register tr.entry.struck .cert { opa
   font-family: var(--mono); font-size: 10.5px; font-weight: 500;
   text-transform: uppercase; letter-spacing: .14em; color: var(--stamp);
 }
+.held-flag {
+  display: block; margin-top: 3px;
+  font-family: var(--mono); font-size: 10.5px;
+  text-transform: uppercase; letter-spacing: .14em; color: var(--ink-3);
+}
 table.register td.mono { font-family: var(--mono); font-size: 13px; color: var(--ink-2); }
 table.register td .mark { font-size: 11.5px; padding: 4px 7px 3px; }
 .register-empty { border-bottom: 1px solid var(--line); padding: 56px 20px; text-align: center; color: var(--ink-2); font-style: italic; }
@@ -282,6 +287,10 @@ table.register td .mark { font-size: 11.5px; padding: 4px 7px 3px; }
 .consent { font-family: var(--mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 .consent.public { color: var(--blue); }
 .consent.restricted, .consent.embargoed { color: var(--stamp); }
+
+/* relation cross-references read as catalogue see-also lines */
+a.rel-link { color: var(--ink); text-decoration: none; font-size: 16px; }
+a.rel-link:hover { color: var(--stamp); }
 
 /* the IIIF look at a surviving copy */
 .copy-viewer { position: relative; height: 440px; margin: 14px 0 6px; border: 1px solid var(--line-2); background: var(--mat); }
@@ -360,6 +369,59 @@ table.gazetteer td.no { font-family: var(--mono); font-size: 12.5px; color: var(
 table.gazetteer td.coords { font-family: var(--mono); font-size: 13px; }
 table.gazetteer tr.row { cursor: pointer; }
 table.gazetteer tr.row:hover td { background: var(--soft); }
+
+/* ---- the timeline: a chronicle of disappearance ---- */
+.tl-yearhead { display: flex; align-items: baseline; gap: 18px; margin: 42px 0 4px; }
+.tl-yearhead .y { font-family: var(--mono); font-size: 25px; font-weight: 500; letter-spacing: .03em; }
+.tl-yearhead .rule { flex: 1; border-top: 3px double var(--line-2); transform: translateY(-6px); }
+.tl-item { display: flex; gap: 18px; align-items: baseline; padding: 13px 2px 14px; border-bottom: 1px solid var(--line); cursor: pointer; }
+.tl-item:hover { background: var(--soft); }
+.tl-item .when { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); width: 148px; flex: none; text-transform: uppercase; letter-spacing: .08em; padding-top: 3px; }
+.tl-item .no { font-family: var(--mono); font-size: 12.5px; color: var(--stamp); width: 86px; flex: none; letter-spacing: .05em; }
+.tl-item .what { flex: 1; font-size: 16.5px; color: var(--ink); min-width: 0; }
+.tl-item .what .by { font-style: italic; color: var(--ink-2); font-size: 15px; margin-left: 10px; }
+.tl-item .mark { font-size: 11px; padding: 3px 6px 2px; }
+.tl-event {
+  margin: 18px 0; padding: 16px 22px 15px;
+  background: var(--surface); border: 1px solid var(--ink);
+  box-shadow: 4px 4px 0 rgba(33, 29, 18, .08);
+}
+.tl-event .ev-tag { font-family: var(--mono); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .14em; color: var(--stamp); }
+.tl-event .ev-name { font-size: 19.5px; font-weight: 600; margin: 4px 0 2px; }
+.tl-event .ev-place { font-style: italic; color: var(--ink-2); font-size: 15.5px; }
+.tl-event .ev-note { color: var(--ink-2); font-size: 15.5px; line-height: 1.6; margin-top: 6px; }
+.tl-event .ev-count { font-family: var(--mono); font-size: 11.5px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-3); margin-top: 9px; }
+
+/* ---- a paper dialog, for merge conflicts and fixity reports ---- */
+.sheet-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(33, 29, 18, .26);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 56px 20px; overflow: auto;
+}
+.paper-dialog {
+  background: var(--surface); border: 1px solid var(--ink);
+  box-shadow: 6px 6px 0 rgba(33, 29, 18, .18);
+  max-width: 780px; width: 100%; padding: 24px 30px 22px;
+}
+.paper-dialog h3 {
+  margin: 0 0 6px; font-family: var(--mono); font-size: 13px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: .14em; color: var(--ink);
+  padding-bottom: 10px; border-bottom: 3px double var(--line-2);
+}
+.paper-dialog .dlg-body { max-height: 56vh; overflow-y: auto; }
+.paper-dialog .dlg-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
+.conflict { border-bottom: 1px solid var(--line); padding: 15px 0 13px; }
+.conflict .cid { font-family: var(--mono); font-size: 12.5px; color: var(--stamp); letter-spacing: .05em; margin-bottom: 8px; }
+.conflict .sides { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.conflict .side label { display: flex; gap: 10px; align-items: baseline; cursor: pointer; font-size: 15.5px; color: var(--ink); }
+.conflict .side .who { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-3); }
+.conflict .side .sum { font-size: 14.5px; color: var(--ink-2); margin-top: 3px; line-height: 1.5; }
+.report-table { width: 100%; border-collapse: collapse; }
+.report-table td { padding: 9px 10px 9px 0; border-bottom: 1px solid var(--line); font-size: 15px; color: var(--ink-2); }
+.report-table td.f { font-family: var(--mono); font-size: 12.5px; word-break: break-all; }
+.report-table .ok { color: var(--blue); }
+.report-table .bad { color: var(--stamp); font-weight: 600; }
 
 /* ---- toast ---- */
 .toast {

@@ -37,17 +37,39 @@ LC.Stats = (function () {
     const evidence = rs.flatMap(r => r.evidence || []);
     const copies = rs.flatMap(r => r.copies || []);
     const located = rs.filter(r => r.location && (r.location.place || (typeof r.location.lat === 'number' && typeof r.location.lon === 'number')));
-    const safe = located.filter(r => r.location.safe);
+    const publishable = located.filter(r => r.location.publish !== 'withheld');
+    const published = rs.filter(r => r.publish).length;
 
     let h = '<h2 class="head">Statistics</h2>' +
       '<p class="subhead">what the register holds, counted</p>';
 
     h += '<div class="stats-grid">' +
       cell(rs.length, rs.length === 1 ? 'entry' : 'entries') +
+      (opts.publicOnly ? '' : cell(published, 'marked publish')) +
       cell(evidence.length, 'items of evidence') +
       cell(copies.length, 'surviving copies') +
       cell(located.length, 'places recorded') +
       '</div>';
+
+    const events = (data.project && data.project.events) || [];
+    if (events.length) {
+      h += '<h3 class="head" style="font-size:19px;margin-top:40px">By loss event</h3>';
+      h += '<table class="tally">';
+      events.forEach(ev => {
+        const n = rs.filter(r => r.eventId === ev.id).length;
+        h += '<tr><td class="k" style="width:300px"><span style="font-weight:500">' + U.esc(ev.name || 'unnamed event') + '</span>' +
+          (ev.date ? ' <span class="cert" style="font-size:14.5px">' + U.esc(ev.date) + '</span>' : '') + '</td>' +
+          '<td class="bar" style="color:var(--stamp)">' + tallySVG(n) + '</td>' +
+          '<td class="n">' + n + '</td></tr>';
+      });
+      const unassigned = rs.filter(r => !r.eventId).length;
+      if (unassigned) {
+        h += '<tr><td class="k" style="width:300px"><span style="font-style:italic;color:var(--ink-3)">no event recorded</span></td>' +
+          '<td class="bar" style="color:var(--ink-3)">' + tallySVG(unassigned) + '</td>' +
+          '<td class="n">' + unassigned + '</td></tr>';
+      }
+      h += '</table>';
+    }
 
     h += '<h3 class="head" style="font-size:19px;margin-top:40px">By status</h3>';
     h += '<table class="tally">';
@@ -80,9 +102,13 @@ LC.Stats = (function () {
           '<td class="n">' + n + '</td></tr>';
       });
       h += '</table>';
+      const held = rs.length - published;
+      const lapsed = LC.Model.lapsedEmbargoes().length;
       h += '<p class="stats-note">Restricted and embargoed evidence is counted here but never exported. ' +
+        (held ? held + (held === 1 ? ' entry is' : ' entries are') + ' held back from publication. ' : '') +
         'Of the ' + located.length + ' recorded ' + (located.length === 1 ? 'place' : 'places') + ', ' +
-        safe.length + (safe.length === 1 ? ' is' : ' are') + ' marked safe to publish.' +
+        publishable.length + (publishable.length === 1 ? ' is' : ' are') + ' marked to publish, exactly or approximately.' +
+        (lapsed ? ' ' + lapsed + ' embargo ' + (lapsed === 1 ? 'date has' : 'dates have') + ' passed and would welcome review.' : '') +
         (struckN ? ' ' + struckN + ' struck ' + (struckN === 1 ? 'entry remains' : 'entries remain') +
           ' in the ledger as cancelled lines, outside these counts and every export.' : '') + '</p>';
     } else {

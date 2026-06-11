@@ -6,11 +6,12 @@ LC.App = (function () {
   const U = LC.util;
   let filePickCb = null;
 
-  /* ---------- routing: #/register, #/entry/<id>, #/statistics, #/atlas ---------- */
+  /* ---------- routing: #/register, #/entry/<id>, #/timeline, #/statistics, #/atlas ---------- */
   function parseHash() {
     const h = location.hash || '';
     const m = /^#\/entry\/(.+)$/.exec(h);
     if (m) return { view: 'entry', id: decodeURIComponent(m[1]) };
+    if (h === '#/timeline') return { view: 'timeline', id: null };
     if (h === '#/statistics') return { view: 'statistics', id: null };
     if (h === '#/atlas') return { view: 'atlas', id: null };
     return { view: 'register', id: null };
@@ -22,7 +23,7 @@ LC.App = (function () {
     if (r.view === 'entry' && r.id) S.route.id = r.id;
     S.route.view = r.view;
 
-    ['register', 'entry', 'statistics', 'atlas'].forEach(v => {
+    ['register', 'entry', 'timeline', 'statistics', 'atlas'].forEach(v => {
       const sect = document.getElementById('view-' + v);
       if (sect) sect.classList.toggle('hidden', v !== r.view);
       const btn = document.querySelector('nav.folio button[data-view="' + v + '"]');
@@ -31,9 +32,30 @@ LC.App = (function () {
 
     if (r.view === 'register') LC.Register.render();
     else if (r.view === 'entry') LC.Record.render(r.id);
+    else if (r.view === 'timeline') LC.Timeline.render();
     else if (r.view === 'statistics') LC.Stats.render();
     else if (r.view === 'atlas') LC.Atlas.render();
     window.scrollTo(0, 0);
+  }
+
+  /* ---------- a paper dialog over the page ---------- */
+  function sheet(title, body, actions) {
+    const overlay = U.h('div', { class: 'sheet-overlay' });
+    const close = () => overlay.remove();
+    const dlg = U.h('div', { class: 'paper-dialog' },
+      U.h('h3', null, title),
+      U.h('div', { class: 'dlg-body' }, body));
+    const acts = U.h('div', { class: 'dlg-actions' });
+    (actions || [{ label: 'Close' }]).forEach(a => {
+      acts.append(U.h('button', { class: 'btn' + (a.danger ? ' danger' : '') }, a.label));
+      const b = acts.lastElementChild;
+      b.addEventListener('click', () => { if (!a.onclick || a.onclick() !== false) close(); });
+    });
+    dlg.append(acts);
+    overlay.append(dlg);
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    document.body.append(overlay);
+    return close;
   }
 
   /* ---------- change notifications ---------- */
@@ -104,6 +126,98 @@ LC.App = (function () {
     }, 60);
   }
 
+  /* ---------- bringing work in ---------- */
+  function importCSVFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const res = LC.Importers.importCSV(reader.result);
+        LC.Store.save();
+        route();
+        let msg = res.added + (res.added === 1 ? ' entry' : ' entries') + ' imported, held back until you publish them';
+        if (res.renumbered) msg += '; ' + res.renumbered + ' renumbered';
+        U.toast(msg);
+        if (res.unmatched.length) setTimeout(() =>
+          U.toast('Columns not understood: ' + res.unmatched.slice(0, 4).join(', ') + (res.unmatched.length > 4 ? '…' : '')), 2600);
+      } catch (e) {
+        U.toast(e.message || 'That file could not be read as a CSV');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function mergeFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      let plan;
+      try { plan = LC.Importers.planMerge(JSON.parse(reader.result)); }
+      catch (e) { return U.toast(e.message || 'That file could not be read as a Lacuna project'); }
+
+      const summary = () => {
+        LC.Importers.applyMerge(plan, choices);
+        LC.Store.save();
+        route();
+        U.toast('Merged: ' + plan.newRecords.length + ' new, ' +
+          plan.conflicts.length + ' reconciled, ' + plan.identical + ' identical' +
+          (plan.newEvents.length ? ', ' + plan.newEvents.length + ' events' : ''));
+      };
+      const choices = {};
+      if (!plan.conflicts.length) {
+        if (!plan.newRecords.length && !plan.newEvents.length) return U.toast('Nothing new: the registers already agree');
+        return summary();
+      }
+
+      /* conflicts decided by a human, side by side */
+      const body = U.h('div');
+      body.append(U.h('p', { class: 'hint', style: { marginTop: '12px' } },
+        plan.newRecords.length + ' new entries will be added. These ' + plan.conflicts.length +
+        ' exist in both registers and differ; choose which version stands. The newer one is suggested.'));
+      plan.conflicts.forEach(c => {
+        const newer = (c.incoming.modified || '') > (c.local.modified || '') ? 'theirs' : 'mine';
+        choices[c.id] = newer;
+        const side = (who, label, rec) => {
+          const radio = U.h('input', { type: 'radio', name: 'cf-' + c.id, value: who });
+          radio.checked = choices[c.id] === who;
+          radio.addEventListener('change', () => { choices[c.id] = who; });
+          return U.h('div', { class: 'side' },
+            U.h('label', null, radio,
+              U.h('span', null,
+                U.h('span', { class: 'who' }, label + (newer === who ? ' · newer' : '')),
+                U.h('div', { class: 'sum' },
+                  LC.Model.title(rec) + ' · ' + LC.vocab.statusOf(rec.status).label.toLowerCase() +
+                  (rec.modified ? ' · ' + rec.modified.slice(0, 10) : '')))));
+        };
+        body.append(U.h('div', { class: 'conflict' },
+          U.h('div', { class: 'cid' }, c.id),
+          U.h('div', { class: 'sides' }, side('mine', 'Mine', c.local), side('theirs', 'Theirs', c.incoming))));
+      });
+      sheet('Reconcile the two registers', body, [
+        { label: 'Cancel', onclick: () => true },
+        { label: 'Apply merge', onclick: () => { summary(); } },
+      ]);
+    };
+    reader.readAsText(file);
+  }
+
+  async function checkFixity(files) {
+    U.toast('Hashing ' + files.length + (files.length === 1 ? ' file…' : ' files…'));
+    const results = await LC.Importers.checkFiles(files);
+    if (results.length && results.every(x => x.verdict === 'verified')) {
+      return U.toast('All ' + results.length + ' verified: the files match their fingerprints');
+    }
+    const body = U.h('div');
+    const table = U.h('table', { class: 'report-table' });
+    results.forEach(x => {
+      table.append(U.h('tr', null,
+        U.h('td', { class: 'f' }, x.name),
+        U.h('td', null, x.entry || ''),
+        U.h('td', { class: x.verdict === 'verified' ? 'ok' : x.verdict === 'mismatch' ? 'bad' : '' },
+          x.verdict === 'verified' ? 'unchanged' : x.verdict === 'mismatch' ? 'DOES NOT MATCH' : 'not in the register')));
+    });
+    body.append(table);
+    sheet('Fixity report', body, [{ label: 'Close' }]);
+  }
+
   /* a shared file dialog: callers hand over what to do with the file */
   function pickFile(cb) {
     filePickCb = cb;
@@ -158,6 +272,9 @@ LC.App = (function () {
       if (act === 'new') newProject();
       else if (act === 'open') { const i = document.getElementById('project-input'); i.value = ''; i.click(); }
       else if (act === 'save') LC.Exporters.saveProject();
+      else if (act === 'csv') { const i = document.getElementById('csv-input'); i.value = ''; i.click(); }
+      else if (act === 'merge') { const i = document.getElementById('merge-input'); i.value = ''; i.click(); }
+      else if (act === 'fixity') { const i = document.getElementById('fixity-input'); i.value = ''; i.click(); }
       else if (act === 'sample') loadSample();
     });
     document.getElementById('export-menu').addEventListener('click', e => {
@@ -177,12 +294,30 @@ LC.App = (function () {
       if (e.target.files && e.target.files[0] && filePickCb) filePickCb(e.target.files[0]);
       filePickCb = null;
     });
+    document.getElementById('csv-input').addEventListener('change', e => {
+      if (e.target.files && e.target.files[0]) importCSVFile(e.target.files[0]);
+    });
+    document.getElementById('merge-input').addEventListener('change', e => {
+      if (e.target.files && e.target.files[0]) mergeFile(e.target.files[0]);
+    });
+    document.getElementById('fixity-input').addEventListener('change', e => {
+      if (e.target.files && e.target.files.length) checkFixity(Array.from(e.target.files));
+    });
 
     window.addEventListener('hashchange', route);
     route();
+
+    /* a gentle word when an embargo date has passed */
+    const lapsed = LC.Model.lapsedEmbargoes();
+    if (lapsed.length) {
+      const ids = [...new Set(lapsed.map(x => x.recordId))];
+      setTimeout(() => U.toast(
+        (lapsed.length === 1 ? 'An embargo date has passed' : lapsed.length + ' embargo dates have passed') +
+        ': review ' + ids.slice(0, 3).join(', ') + (ids.length > 3 ? '…' : '')), 900);
+    }
   }
 
   document.addEventListener('DOMContentLoaded', boot);
 
-  return { route, entryChanged, projectChanged, newEntry, newProject, loadSample, pickFile };
+  return { route, entryChanged, projectChanged, newEntry, newProject, loadSample, pickFile, sheet };
 })();

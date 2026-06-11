@@ -299,8 +299,10 @@ def rec(n, **kw):
         "status": "unlocated", "certainty": "uncertain",
         "lastSeen": {"date": "", "place": "", "source": ""},
         "note": "", "tags": [],
-        "location": {"place": "", "lat": None, "lon": None, "safe": False},
+        "eventId": None, "relations": [],
+        "location": {"place": "", "lat": None, "lon": None, "publish": "withheld"},
         "evidence": [], "copies": [],
+        "publish": True,   # the sample publishes its entries so the finding aid is full
         "struck": False,
         "created": T, "modified": T,
     }
@@ -309,6 +311,19 @@ def rec(n, **kw):
 
 
 STUDIO = "Studio al-Qamar portrait files"
+
+EVENTS = [
+    {"id": "evt-1", "name": "The winter fire of 1976", "date": "February 1976",
+     "place": "Qamariyya, the studio",
+     "note": "A stove fire in the back room took the studio in a night. What was not "
+             "burned stood unguarded in the courtyard for a week."},
+    {"id": "evt-2", "name": "The sale and clearing of the shop", "date": "1977",
+     "place": "Qamariyya",
+     "note": "The fittings were sold, and scrap dealers cleared the street the same year."},
+    {"id": "evt-3", "name": "The roof failure at the family house", "date": "1981",
+     "place": "Qamariyya, the family house",
+     "note": "Winter rain came through the stairwell where the exhibition prints hung."},
+]
 
 records = [
     rec(1,
@@ -324,6 +339,7 @@ records = [
               "burned together in the winter fire of 1976. A small copy print, made for the family "
               "in 1935, was photographed in 2019: the only image of the image."),
         tags=["portraits", "window display"],
+        eventId="evt-1",
         evidence=[
             ev("photograph", "Copy print of 1935, photographed in 2019", name="copy-portrait-daughters.png",
                note="the family's copy, rephotographed"),
@@ -342,7 +358,8 @@ records = [
               "of it survived the winter fire of 1976.\n\nThe inventory page reproduced here was "
               "kept at the photographer's house and is the best record of what the cabinet held."),
         tags=["glass plates", "negatives"],
-        location={"place": "Qamariyya", "lat": 34.1, "lon": 35.9, "safe": True},
+        eventId="evt-1",
+        location={"place": "Qamariyya", "lat": 34.1, "lon": 35.9, "publish": "exact"},
         evidence=[
             ev("document", "Inventory of the plate cabinet, 1931, page 3", name="inventory-page.png",
                note="from the photographer's house papers"),
@@ -357,9 +374,11 @@ records = [
         note=("Assembled for the Nahhal family and awaiting collection when the fire came. In the "
               "week after, the salvaged stock stood unguarded in the courtyard, and the album was "
               "taken with the brass scales and the till. A neighbour's notice in the town paper "
-              "asked for its return. Nothing came of it."),
+              "asked for its return. Nothing came of it.\n\nThe family asked that this entry "
+              "stay out of the published register for now; it is held back, catalogued and counted."),
         tags=["albums", "weddings"],
-        location={"place": "last offered for sale inland", "lat": 34.4, "lon": 36.2, "safe": False},
+        eventId="evt-1", publish=False,
+        location={"place": "last offered for sale inland", "lat": 34.4, "lon": 36.2, "publish": "withheld"},
         evidence=[
             ev("citation", "Notice in the Qamariyya town paper, March 1976",
                note="transcribed from the family's clipping; the clipping itself is with them"),
@@ -374,6 +393,7 @@ records = [
               "holds a contact print pasted in by the librarian, who collected the studio's work. "
               "The copy is the only surviving image of the studio's first north-window room."),
         tags=["self-portraits", "the first room"],
+        relations=[{"type": "part-of", "target": "LAC-0002"}],
         evidence=[
             ev("photograph", "The library's contact print (scan)", name="copy-self-portrait.png",
                note="scan of album QL-12, leaf 9"),
@@ -394,6 +414,7 @@ records = [
               "sitters' names and plate numbers in a fine commercial hand. Three runs of pages are "
               "known: two in collections, one in a dealer's stock. The rest is unaccounted for."),
         tags=["ledgers", "daybooks"],
+        eventId="evt-2",
         copies=[
             cp("Bayt al-Suwar collection", "leaves 12 to 31", note="acquired 1989"),
             cp("a private collection abroad", "leaves 44 to 60", note="seen and listed in 2003"),
@@ -409,7 +430,7 @@ records = [
               "envelopes were deposited with the public works office and never returned. They may "
               "sit uncatalogued in the municipal deposit, which has no reading room and no list."),
         tags=["floods", "negatives", "municipal work"],
-        location={"place": "Qamariyya, municipal deposit", "lat": None, "lon": None, "safe": False}),
+        location={"place": "Qamariyya, municipal deposit", "lat": None, "lon": None, "publish": "withheld"}),
 
     rec(7,
         titles=[{"text": "مشهد الميناء عند الغروب", "lang": "ar"},
@@ -422,6 +443,8 @@ records = [
               "the roof failed in 1981. The emulsion lifted along the lower third. What remains is "
               "stable, but the foreground figures are gone."),
         tags=["harbour", "exhibition prints"],
+        eventId="evt-3",
+        location={"place": "Qamariyya, the family house", "lat": 34.18, "lon": 35.97, "publish": "approximate"},
         evidence=[
             ev("photograph", "The print after the water damage", name="harbour-dusk.png",
                note="photographed in the family house, 2019"),
@@ -436,6 +459,7 @@ records = [
               "street series, the daybook counts some two hundred frames; one torn sheet survives, "
               "eleven frames, found behind the forced cabinet."),
         tags=["street", "contact sheets"],
+        eventId="evt-1",
         evidence=[
             ev("photograph", "The surviving contact sheet (scan)", name="contact-sheet-fragment.png",
                note="torn at the right edge when the cabinet was forced"),
@@ -450,6 +474,7 @@ records = [
               "who saw it afterwards has given an account on condition that it stay closed until "
               "they say otherwise. The account is held embargoed; the entry stands on it."),
         tags=["ledgers", "sitters"],
+        eventId="evt-2",
         evidence=[
             ev("testimony", "Account concerning the ledger, recorded 2021", consent="embargoed",
                note="closed at the narrator's request"),
@@ -465,7 +490,8 @@ records = [
         note=("Painted tin, a crescent and the studio's name in two scripts. Last photographed in "
               "place in 1975. Scrap dealers cleared the street in 1977, and the sign is presumed "
               "to have gone with the rest."),
-        tags=["signage", "the shopfront"]),
+        tags=["signage", "the shopfront"],
+        eventId="evt-2"),
 
     rec(11,
         titles=[{"text": "Print stock and frames, the back room", "lang": "en"}],
@@ -473,7 +499,8 @@ records = [
         status="dispersed", certainty="uncertain",
         lastSeen={"date": "1977", "place": "Qamariyya", "source": "the daybook's last mention"},
         note="Known only from a mention in the daybook at the sale of the fittings. Nothing else attests it.",
-        tags=["the back room"]),
+        tags=["the back room"],
+        eventId="evt-2"),
 
     rec(12,
         titles=[{"text": "Album of the citrus harvest at Tal Maja", "lang": "en"},
@@ -485,7 +512,8 @@ records = [
               "studio's file copy burned in 1976; the association's copy survives in the village, "
               "rebound in the 1990s."),
         tags=["albums", "villages", "harvests"],
-        location={"place": "Tal Maja", "lat": 33.8, "lon": 36.4, "safe": True},
+        eventId="evt-1",
+        location={"place": "Tal Maja", "lat": 33.8, "lon": 36.4, "publish": "exact"},
         copies=[
             cp("Tal Maja village association", "the anniversary copy", note="rebound; pages complete"),
         ]),
@@ -497,6 +525,8 @@ records = [
         note=("Entered a second time by mistake; the daybook is recorded at entry LAC-0005. "
               "Struck rather than erased, in the ledger's manner, so the numbering stands."),
         tags=["ledgers", "daybooks"],
+        eventId="evt-2", publish=False,
+        relations=[{"type": "related", "target": "LAC-0005"}],
         struck=True),
 ]
 
@@ -506,6 +536,7 @@ project = {
     "compiler": "the sample cataloguer",
     "institution": "MIRL Lacuna sample data",
     "contact": "",
+    "events": EVENTS,
     "note": ("Everything in this register is invented: the town of Qamariyya, the Studio al-Qamar, "
              "its people, and every loss recorded here. It exists to show how MIRL Lacuna works. "
              "Any resemblance to real people, places, archives, or events is coincidental."),

@@ -26,8 +26,10 @@ LC.Register = (function () {
     let titleCell = '<span class="t"' + dirAttr(t) + '>' + U.esc(t) + '</span>';
     alts.forEach(a => { titleCell += '<span class="t2"' + dirAttr(a.text) + (a.lang ? ' lang="' + U.esc(a.lang) + '"' : '') + '>' + U.esc(a.text) + '</span>'; });
     if (r.creator) titleCell += '<span class="by">' + U.esc(r.creator) + '</span>';
+    const flag = r.struck ? '<span class="struck-flag">struck</span>'
+      : (!r.publish && !opts.static ? '<span class="held-flag">held back</span>' : '');
     return '<tr class="entry' + (r.struck ? ' struck' : '') + '" data-id="' + U.esc(r.id) + '">' +
-      '<td class="no">' + U.esc(r.id) + (r.struck ? '<span class="struck-flag">struck</span>' : '') + '</td>' +
+      '<td class="no">' + U.esc(r.id) + flag + '</td>' +
       '<td class="title">' + titleCell + '</td>' +
       '<td class="mono">' + U.esc(r.date) + '</td>' +
       '<td>' + U.esc(r.medium) + '</td>' +
@@ -159,6 +161,8 @@ LC.Register = (function () {
     let txt = shownLive === live
       ? live + (live === 1 ? ' entry' : ' entries')
       : shownLive + ' of ' + live + ' entries shown';
+    const held = LC.Model.heldBackCount();
+    if (held) txt += ' · ' + held + ' held back';
     if (shownStruck) txt += ' · ' + shownStruck + ' struck ' + (shownStruck === 1 ? 'line' : 'lines');
     count.textContent = txt;
 

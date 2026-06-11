@@ -42,7 +42,10 @@ LC.Tombstone = (function () {
         if (meta) h += '<div class="ev-meta">' + meta + '</div>';
         if (e.note) h += '<div class="ev-note"' + dirAttr(e.note) + '>' + U.esc(e.note) + '</div>';
         if (e.thumb && (!opts.publicOnly || e.consent === 'public')) h += '<img class="ev-thumb" src="' + e.thumb + '" alt="">';
-        h += '</td><td><span class="consent ' + U.esc(e.consent) + '">' + U.esc(e.consent) + '</span>' +
+        const lapsed = e.consent === 'embargoed' && e.until && e.until <= new Date().toISOString().slice(0, 10);
+        h += '</td><td><span class="consent ' + U.esc(e.consent) + '">' + U.esc(e.consent) +
+          (e.consent === 'embargoed' && e.until ? ' until ' + U.esc(e.until) : '') + '</span>' +
+          (!opts.publicOnly && lapsed ? '<div class="ev-meta" style="color:var(--stamp)">embargo date has passed: review</div>' : '') +
           (!opts.publicOnly && e.consent !== 'public' ? '<div class="ev-meta">withheld from exports</div>' : '') +
           '</td></tr>';
       });
@@ -77,6 +80,41 @@ LC.Tombstone = (function () {
     return h + '</table></div>';
   }
 
+  /* relations on this entry, plus computed inverses of relations pointing
+     at it from elsewhere in the register */
+  function relationLines(r, opts) {
+    const all = opts.records || LC.state.records;
+    const lines = [];
+    (r.relations || []).forEach(x => {
+      const t = all.find(o => o.id === x.target);
+      if (t) lines.push({ label: LC.vocab.relationOf(x.type).label, rec: t });
+    });
+    all.forEach(o => {
+      if (o.id === r.id) return;
+      (o.relations || []).forEach(x => {
+        if (x.target === r.id) {
+          const inv = LC.vocab.relationOf(LC.vocab.relationOf(x.type).inverse);
+          lines.push({ label: inv.label, rec: o });
+        }
+      });
+    });
+    return lines;
+  }
+
+  function relationsHTML(r, opts) {
+    const lines = relationLines(r, opts);
+    if (!lines.length) return '';
+    let h = '<div class="ts-sect"><h3>In relation</h3><table class="ev-table">';
+    lines.forEach(l => {
+      h += '<tr><td class="kind" style="width:110px;padding-top:13px">' + U.esc(l.label) + '</td>' +
+        '<td><a class="rel-link" href="#/entry/' + U.esc(l.rec.id) + '">' +
+        '<span style="font-family:var(--mono);font-size:12.5px;color:var(--stamp)">' + U.esc(l.rec.id) + '</span>  ' +
+        U.esc(LC.Model.title(l.rec)) + '</a>' +
+        (l.rec.struck ? ' <span class="consent restricted">struck</span>' : '') + '</td></tr>';
+    });
+    return h + '</table></div>';
+  }
+
   function html(r, opts) {
     opts = opts || {};
     const p = opts.project || LC.state.project;
@@ -89,6 +127,7 @@ LC.Tombstone = (function () {
     h += '<div class="ts-top"><div class="ts-no">Entry ' + U.esc(r.id) + '</div>' +
       '<div class="ts-stamp"><span class="mark ' + st.cls + '">' + U.esc(st.label) + '</span>' +
       (r.struck ? '<span class="mark st-struck">Struck from the register</span>' : '') +
+      (!opts.static && !r.struck && !r.publish ? '<span class="mark st-struck">Held back from publication</span>' : '') +
       '</div></div>';
     h += '<h2 class="ts-title"' + dirAttr(title) + '>' + U.esc(title) + '</h2>';
     alts.forEach(a => {
@@ -104,17 +143,23 @@ LC.Tombstone = (function () {
     h += row('Condition of record', '<span class="cert"><span class="pt">' + cert.pt + '</span>' + cert.label + '</span> · ' + U.esc(st.label.toLowerCase()));
     const seen = [r.lastSeen.date, r.lastSeen.place].filter(s => s && s.trim()).join(', ');
     h += row('Last seen', U.esc(seen) + (r.lastSeen.source ? (seen ? ' · ' : '') + '<span style="font-style:italic">' + U.esc(r.lastSeen.source) + '</span>' : ''));
+    const ev = r.eventId && (p.events || []).find(x => x.id === r.eventId);
+    if (ev && (ev.name || ev.date)) {
+      h += row('Loss event', U.esc(ev.name || 'unnamed event') + (ev.date ? ' <span style="font-style:italic">(' + U.esc(ev.date) + ')</span>' : ''));
+    }
     const loc = r.location || {};
     const hasCoords = typeof loc.lat === 'number' && typeof loc.lon === 'number';
     if (loc.place || hasCoords) {
-      if (opts.publicOnly && !loc.safe) {
+      const fmt = (lat, lon) => '<span style="font-family:var(--mono);font-size:13.5px">' +
+        Math.abs(lat).toFixed(3) + (lat >= 0 ? ' N' : ' S') + ', ' +
+        Math.abs(lon).toFixed(3) + (lon >= 0 ? ' E' : ' W') + '</span>';
+      if (opts.publicOnly && loc.publish === 'withheld') {
         /* withheld in public documents */
       } else {
         let v = U.esc(loc.place || '');
-        if (hasCoords) v += (v ? ' · ' : '') + '<span style="font-family:var(--mono);font-size:13.5px">' +
-          Math.abs(loc.lat).toFixed(3) + (loc.lat >= 0 ? ' N' : ' S') + ', ' +
-          Math.abs(loc.lon).toFixed(3) + (loc.lon >= 0 ? ' E' : ' W') + '</span>';
-        if (!opts.publicOnly && !loc.safe) v += ' <span class="consent restricted">not for publication</span>';
+        if (hasCoords) v += (v ? ' · ' : '') + fmt(loc.lat, loc.lon);
+        if (loc.publish === 'approximate') v += ' <span style="font-style:italic">(approximate)</span>';
+        if (!opts.publicOnly && loc.publish === 'withheld') v += ' <span class="consent restricted">not for publication</span>';
         h += row('Place of last record', v);
       }
     }
@@ -130,6 +175,7 @@ LC.Tombstone = (function () {
 
     h += evidenceHTML(r, opts);
     h += copiesHTML(r, opts);
+    h += relationsHTML(r, opts);
 
     /* the footnote: how to cite this entry */
     if (opts.static) {
@@ -364,9 +410,17 @@ LC.Desk = (function () {
       });
       certPick.append(b);
     });
+    const evSel = U.h('select', null,
+      U.h('option', { value: '' }, 'no event'),
+      ...(S.project.events || []).map(ev =>
+        U.h('option', { value: ev.id, selected: r.eventId === ev.id ? '' : null },
+          (ev.name || 'unnamed event') + (ev.date ? ' (' + ev.date + ')' : ''))));
+    evSel.addEventListener('change', () => { r.eventId = evSel.value || null; LC.App.entryChanged(r); });
     return sect('What became of it', 'status, and how firmly it is known',
       U.h('div', { class: 'field' }, U.h('label', null, 'Status'), statusPick),
-      U.h('div', { class: 'field' }, U.h('label', null, 'Certainty'), certPick));
+      U.h('div', { class: 'field' }, U.h('label', null, 'Certainty'), certPick),
+      U.h('div', { class: 'field' }, U.h('label', null, 'Loss event'), evSel,
+        U.h('div', { class: 'note' }, 'Events (a fire, a sale, a flood) are kept on the Timeline folio; entries that share one are gathered there.')));
   }
 
   /* ----- evidence ----- */
@@ -404,6 +458,18 @@ LC.Desk = (function () {
       if (e.file && e.file.name) {
         row.append(U.h('span', { style: { fontFamily: 'var(--mono)', fontSize: '12.5px', color: 'var(--ink-2)' } },
           e.file.name + (e.sha256 ? ' · sha-256 ' + e.sha256.slice(0, 12) + '…' : '')));
+        if (e.sha256) row.append(U.h('button', {
+          class: 'act', title: 'Pick the file again and check it against the recorded fingerprint',
+          onclick: () => LC.App.pickFile(async file => {
+            U.toast('Hashing ' + file.name + '…');
+            try {
+              const hash = await LC.Hash.sha256(await file.arrayBuffer());
+              U.toast(hash === e.sha256
+                ? 'Verified: the file matches the recorded fingerprint'
+                : 'MISMATCH: this is not the recorded file');
+            } catch (err) { U.toast('Could not hash the file'); }
+          }),
+        }, 'Verify'));
         row.append(U.h('button', { class: 'act', onclick: () => { e.file = null; e.sha256 = e.url ? e.sha256 : ''; e.thumb = ''; LC.App.entryChanged(r, true); drawFileLine(); } }, 'Detach'));
       }
       fileLine.append(row, U.h('div', { class: 'note' },
@@ -430,11 +496,21 @@ LC.Desk = (function () {
 
     const consentSel = U.h('select', null, ...LC.vocab.CONSENT.map(c =>
       U.h('option', { value: c.key, selected: e.consent === c.key ? '' : null }, c.label + ': ' + c.gloss)));
-    consentSel.addEventListener('change', () => { e.consent = consentSel.value; LC.App.entryChanged(r); });
+    const untilInput = U.h('input', { type: 'date', value: e.until || '' });
+    untilInput.addEventListener('input', () => { e.until = untilInput.value; LC.App.entryChanged(r); });
+    const untilField = U.h('div', { class: 'field', style: { display: e.consent === 'embargoed' ? '' : 'none' } },
+      U.h('label', null, 'Embargoed until'), untilInput,
+      U.h('div', { class: 'note' }, 'Optional. When the date passes, Lacuna points it out; the consent state itself changes only by your hand.'));
+    consentSel.addEventListener('change', () => {
+      e.consent = consentSel.value;
+      untilField.style.display = e.consent === 'embargoed' ? '' : 'none';
+      LC.App.entryChanged(r);
+    });
     item.append(U.h('div', { class: 'row2' },
       field(r, 'Rights / credit', () => e.rights, v => { e.rights = v; }, { ph: 'e.g. courtesy of the family' }),
       U.h('div', { class: 'field' }, U.h('label', null, 'Consent'), consentSel,
         U.h('div', { class: 'note' }, 'Only public evidence enters exports and the finding aid. Restricted and embargoed material never leaves this file.'))));
+    item.append(untilField);
 
     item.append(field(r, 'Note', () => e.note, v => { e.note = v; }, { ph: 'who provided it, what it shows' }));
     return item;
@@ -488,6 +564,45 @@ LC.Desk = (function () {
           LC.App.entryChanged(r, true); redraw();
         },
       }, '+ Add a surviving copy')));
+  }
+
+  /* ----- relations: typed links; the other side is computed, not stored ----- */
+  function relationsSect(r) {
+    const box = U.h('div');
+    const candidates = x => {
+      const list = S.records.filter(o => o.id !== r.id && !o.struck);
+      if (x && x.target && !list.some(o => o.id === x.target)) {
+        const t = LC.Model.get(x.target);
+        if (t) list.push(t);
+      }
+      return list;
+    };
+    const redraw = () => {
+      box.innerHTML = '';
+      r.relations.forEach((x, i) => {
+        const typeSel = U.h('select', null, ...LC.vocab.RELATION.map(v =>
+          U.h('option', { value: v.key, selected: x.type === v.key ? '' : null }, v.label)));
+        typeSel.addEventListener('change', () => { x.type = typeSel.value; LC.App.entryChanged(r); });
+        const tgtSel = U.h('select', { style: { flex: '1', minWidth: '220px' } }, ...candidates(x).map(o =>
+          U.h('option', { value: o.id, selected: x.target === o.id ? '' : null },
+            o.id + ' · ' + LC.Model.title(o) + (o.struck ? ' (struck)' : ''))));
+        tgtSel.addEventListener('change', () => { x.target = tgtSel.value; LC.App.entryChanged(r); });
+        box.append(U.h('div', { style: { display: 'flex', gap: '14px', alignItems: 'baseline', marginBottom: '12px', flexWrap: 'wrap' } },
+          typeSel, tgtSel,
+          U.h('button', { class: 'act', onclick: () => { r.relations.splice(i, 1); LC.App.entryChanged(r, true); redraw(); } }, 'Remove')));
+      });
+    };
+    redraw();
+    return sect('In relation', 'typed links to other entries; the other side is implied',
+      box,
+      U.h('div', { class: 'add-line' }, U.h('button', {
+        class: 'act', onclick: () => {
+          const list = S.records.filter(o => o.id !== r.id && !o.struck);
+          if (!list.length) return U.toast('No other entry to link to yet');
+          r.relations.push({ type: 'part-of', target: list[0].id });
+          LC.App.entryChanged(r, true); redraw();
+        },
+      }, '+ Add a relation')));
   }
 
   /* ----- striking out: a ledger cancels, it does not erase ----- */
@@ -557,19 +672,35 @@ LC.Desk = (function () {
       field(r, 'On whose word', () => r.lastSeen.source, v => { r.lastSeen.source = v; }, { ph: 'the source: a witness, a catalogue, a photograph' })));
 
     const loc = r.location;
-    const safeBox = U.h('input', { type: 'checkbox' });
-    safeBox.checked = !!loc.safe;
-    safeBox.addEventListener('change', () => { loc.safe = safeBox.checked; LC.App.entryChanged(r, true); });
+    const locPick = U.h('div', { class: 'marks-pick' });
+    LC.vocab.LOCPUB.forEach(lp => {
+      const b = U.h('button', { class: 'mark st-unlocated' + (loc.publish === lp.key ? ' on' : ''), title: lp.gloss }, lp.label);
+      b.addEventListener('click', () => {
+        loc.publish = lp.key;
+        locPick.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+        LC.App.entryChanged(r, true);
+      });
+      locPick.append(b);
+    });
     desk.append(sect('Place', 'for the atlas; published only with your say-so',
       field(r, 'Place name', () => loc.place, v => { loc.place = v; }, { ph: 'site, town, region' }),
       U.h('div', { class: 'row2' },
         field(r, 'Latitude', () => loc.lat == null ? '' : loc.lat, v => { const n = parseFloat(v); loc.lat = isFinite(n) ? n : null; }, { ph: 'e.g. 34.42' }),
         field(r, 'Longitude', () => loc.lon == null ? '' : loc.lon, v => { const n = parseFloat(v); loc.lon = isFinite(n) ? n : null; }, { ph: 'e.g. -119.70' })),
       U.h('div', { class: 'field' },
-        U.h('label', { class: 'inline', style: { fontFamily: 'var(--serif)', textTransform: 'none', letterSpacing: '0' } },
-          safeBox, 'Safe to publish this place'),
+        U.h('label', null, 'Publication of this place'), locPick,
         U.h('div', { class: 'note' },
-          'Off by default. Until you tick it, the place stays out of every export, the finding aid, and the atlas: locations can endanger people and sites.'))));
+          'Withheld by default: locations can endanger people and sites. Approximate publishes the place rounded to about 10 km, findable but not targetable. Exact publishes it precisely.'))));
+
+    const pubBox = U.h('input', { type: 'checkbox' });
+    pubBox.checked = !!r.publish;
+    pubBox.addEventListener('change', () => { r.publish = pubBox.checked; LC.App.entryChanged(r, true); });
+    desk.append(sect('Publication', 'whether this entry leaves the working register at all',
+      U.h('div', { class: 'field' },
+        U.h('label', { class: 'inline', style: { fontFamily: 'var(--serif)', textTransform: 'none', letterSpacing: '0' } },
+          pubBox, 'Publish this entry'),
+        U.h('div', { class: 'note' },
+          'Off by default. Until you tick it, the whole entry stays out of the finding aid, the spreadsheet, and the public data: catalogued and counted, but held back. The finding aid states how many entries are held.'))));
 
     desk.append(sect('Narrative note', 'what is known, in your own words',
       field(r, 'Note', () => r.note, v => { r.note = v; }, { textarea: true, rows: '6', ph: 'What it was, how it was lost, who remembers it, what remains unknown.' })));
@@ -583,6 +714,7 @@ LC.Desk = (function () {
 
     desk.append(evidenceSect(r));
     desk.append(copiesSect(r));
+    desk.append(relationsSect(r));
 
     desk.append(strikeSect(r));
 

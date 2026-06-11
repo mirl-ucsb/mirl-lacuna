@@ -30,12 +30,14 @@ LC.Exporters = (function () {
   function registerCSV() {
     const pub = LC.Model.publicClone();
     const head = ['id', 'title', 'parallel_titles', 'creator', 'date', 'medium', 'originating_collection',
-      'status', 'certainty', 'last_seen_date', 'last_seen_place', 'last_seen_source',
-      'narrative', 'tags', 'place', 'latitude', 'longitude', 'public_evidence', 'surviving_copies'];
+      'status', 'certainty', 'loss_event', 'last_seen_date', 'last_seen_place', 'last_seen_source',
+      'narrative', 'tags', 'place', 'latitude', 'longitude', 'location_precision',
+      'public_evidence', 'surviving_copies', 'relations'];
     const rows = pub.records.map(r => {
       const titles = (r.titles || []).filter(t => t.text && t.text.trim());
       const loc = r.location || {};
       const hasCoords = typeof loc.lat === 'number' && typeof loc.lon === 'number';
+      const ev = r.eventId && (pub.project.events || []).find(x => x.id === r.eventId);
       return [
         r.id,
         titles.length ? titles[0].text : '',
@@ -43,14 +45,17 @@ LC.Exporters = (function () {
         r.creator, r.date, r.medium, r.origin,
         LC.vocab.statusOf(r.status).label,
         r.certainty,
+        ev ? ev.name : '',
         r.lastSeen.date, r.lastSeen.place, r.lastSeen.source,
         r.note,
         (r.tags || []).join(' | '),
         loc.place || '',
         hasCoords ? loc.lat : '',
         hasCoords ? loc.lon : '',
+        hasCoords || loc.place ? loc.publish : '',
         (r.evidence || []).length,
         (r.copies || []).map(c => [c.institution, c.identifier].filter(Boolean).join(': ')).filter(Boolean).join(' | '),
+        (r.relations || []).map(x => LC.vocab.relationOf(x.type).label.toLowerCase() + ' ' + x.target).join(' | '),
       ].map(csvCell).join(',');
     });
     /* BOM so spreadsheets read Arabic and accents correctly */
@@ -87,8 +92,8 @@ LC.Exporters = (function () {
   const STATIC_JS = [
     'function show(h){',
     "  var m=/^#\\/entry\\/(.+)$/.exec(h||'');",
-    "  var view=m?'entry':(h==='#/statistics'?'statistics':(h==='#/atlas'?'atlas':'register'));",
-    "  ['register','entry','statistics','atlas'].forEach(function(v){",
+    "  var view=m?'entry':(h==='#/statistics'?'statistics':(h==='#/atlas'?'atlas':(h==='#/timeline'?'timeline':'register')));",
+    "  ['register','entry','timeline','statistics','atlas'].forEach(function(v){",
     "    var s=document.getElementById('v-'+v);",
     "    if(s)s.classList.toggle('hidden',v!==view);",
     "    var b=document.querySelector('nav.folio button[data-view=\"'+v+'\"]');",
@@ -123,13 +128,18 @@ LC.Exporters = (function () {
       '<span class="tag">' + e(p.subtitle || 'a register of absent works') + '</span></div></header>';
     body += '<nav class="folio"><div class="views">' +
       '<button class="view on" data-view="register"><span class="fol">Fol. I</span>Register</button>' +
-      '<button class="view" data-view="statistics"><span class="fol">Fol. II</span>Statistics</button>' +
-      '<button class="view" data-view="atlas"><span class="fol">Fol. III</span>Atlas</button>' +
+      '<button class="view" data-view="timeline"><span class="fol">Fol. II</span>Timeline</button>' +
+      '<button class="view" data-view="statistics"><span class="fol">Fol. III</span>Statistics</button>' +
+      '<button class="view" data-view="atlas"><span class="fol">Fol. IV</span>Atlas</button>' +
       '</div></nav>';
 
+    const heldBack = LC.Model.heldBackCount();
     body += '<main><section class="view" id="v-register"><div class="sheet">';
     body += '<div class="frontmatter"><div class="fm-line">A register of absent works' + (kept ? ' · kept by ' + e(kept) : '') + '</div>';
     if (p.note) body += '<p class="hint" style="max-width:760px;margin-top:14px">' + e(p.note) + '</p>';
+    if (heldBack) body += '<div class="fm-line" style="margin-top:8px">' + heldBack +
+      (heldBack === 1 ? ' further entry is' : ' further entries are') +
+      ' recorded in the working register and not published here</div>';
     if (p.contact) body += '<div class="fm-line" style="margin-top:8px">Contact · ' + e(p.contact) + '</div>';
     body += '</div>';
     body += '<div class="countline">' + pub.records.length + (pub.records.length === 1 ? ' entry' : ' entries') + ' · ' + e(dateLine) + '</div>';
@@ -140,10 +150,12 @@ LC.Exporters = (function () {
     body += '<div style="margin:36px 0 0"><a href="#/register" style="font-family:var(--mono);font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);text-decoration:none">‹ Register</a></div>';
     pub.records.forEach(r => {
       body += '<div class="one tombstone-wrap hidden" id="r-' + e(r.id) + '">' +
-        LC.Tombstone.html(r, { static: true, publicOnly: true, project: p }) + '</div>';
+        LC.Tombstone.html(r, { static: true, publicOnly: true, project: p, records: pub.records }) + '</div>';
     });
     body += '</div></section>';
 
+    body += '<section class="view hidden" id="v-timeline"><div class="sheet narrow">' +
+      LC.Timeline.html(pub, { publicOnly: true }) + '</div></section>';
     body += '<section class="view hidden" id="v-statistics"><div class="sheet narrow">' +
       LC.Stats.html(pub, { publicOnly: true }) + '</div></section>';
     body += '<section class="view hidden" id="v-atlas"><div class="sheet">' +

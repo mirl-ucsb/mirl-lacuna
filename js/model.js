@@ -67,9 +67,25 @@ LC.vocab = {
     { key: 'restricted', label: 'restricted', gloss: 'kept out of every export by default' },
     { key: 'embargoed',  label: 'embargoed',  gloss: 'kept out of every export by default' },
   ],
+  /* how a place may be published */
+  LOCPUB: [
+    { key: 'withheld',    label: 'Withheld',    gloss: 'kept out of every export and the atlas' },
+    { key: 'approximate', label: 'Approximate', gloss: 'published rounded to about 10 km' },
+    { key: 'exact',       label: 'Exact',       gloss: 'published precisely' },
+  ],
+  /* typed links between entries; the inverse is computed, never stored */
+  RELATION: [
+    { key: 'part-of',  label: 'Part of',    inverse: 'contains' },
+    { key: 'contains', label: 'Contains',   inverse: 'part-of' },
+    { key: 'copy-of',  label: 'Copy of',    inverse: 'has-copy' },
+    { key: 'has-copy', label: 'Has copy',   inverse: 'copy-of' },
+    { key: 'related',  label: 'Related to', inverse: 'related' },
+  ],
 };
 LC.vocab.statusOf = k => LC.vocab.STATUS.find(s => s.key === k) || LC.vocab.STATUS[4];
 LC.vocab.certaintyOf = k => LC.vocab.CERTAINTY.find(c => c.key === k) || LC.vocab.CERTAINTY[2];
+LC.vocab.locpubOf = k => LC.vocab.LOCPUB.find(l => l.key === k) || LC.vocab.LOCPUB[0];
+LC.vocab.relationOf = k => LC.vocab.RELATION.find(x => x.key === k) || LC.vocab.RELATION[4];
 
 /* ---------- state ---------- */
 LC.blankProject = () => ({
@@ -79,6 +95,7 @@ LC.blankProject = () => ({
   institution: '',
   contact: '',
   note: '',
+  events: [],   /* loss events: { id, name, date, place, note } */
   created: LC.util.nowISO(),
   modified: LC.util.nowISO(),
 });
@@ -109,9 +126,12 @@ LC.Model = (function () {
       status: 'unlocated', certainty: 'uncertain',
       lastSeen: { date: '', place: '', source: '' },
       note: '', tags: [],
-      location: { place: '', lat: null, lon: null, safe: false },
+      eventId: null,        /* the loss event this entry belongs to */
+      relations: [],        /* typed links: { type, target } */
+      location: { place: '', lat: null, lon: null, publish: 'withheld' },
       evidence: [], copies: [],
-      struck: false,   /* a struck entry stays as a cancelled line; never erased */
+      publish: false,       /* entries are held back until the cataloguer says otherwise */
+      struck: false,        /* a struck entry stays as a cancelled line; never erased */
       created: LC.util.nowISO(), modified: LC.util.nowISO(),
     };
   }
@@ -123,10 +143,22 @@ LC.Model = (function () {
     out.titles = Array.isArray(r.titles) && r.titles.length ? r.titles.map(t => ({ text: t.text || '', lang: t.lang || '' })) : d.titles;
     out.lastSeen = Object.assign({}, d.lastSeen, r.lastSeen || {});
     out.location = Object.assign({}, d.location, r.location || {});
+    /* files saved before locations had three publication states used a
+       boolean "safe"; carry it across */
+    if (!LC.vocab.LOCPUB.some(l => l.key === out.location.publish)) {
+      out.location.publish = (r.location && r.location.safe) ? 'exact' : 'withheld';
+    }
+    delete out.location.safe;
     out.tags = Array.isArray(r.tags) ? r.tags.filter(Boolean) : [];
+    out.eventId = typeof r.eventId === 'string' && r.eventId ? r.eventId : null;
+    out.relations = (Array.isArray(r.relations) ? r.relations : [])
+      .filter(x => x && x.target && LC.vocab.RELATION.some(v => v.key === x.type))
+      .map(x => ({ type: x.type, target: x.target }));
+    out.publish = !!r.publish;
+    out.struck = !!r.struck;
     out.evidence = (Array.isArray(r.evidence) ? r.evidence : []).map(e => Object.assign({
       id: LC.util.uid(), type: 'photograph', label: '', file: null, url: '',
-      sha256: '', rights: '', consent: 'restricted', note: '', thumb: '',
+      sha256: '', rights: '', consent: 'restricted', until: '', note: '', thumb: '',
     }, e));
     out.copies = (Array.isArray(r.copies) ? r.copies : []).map(c => Object.assign({
       id: LC.util.uid(), institution: '', identifier: '', iiif: '', url: '', note: '',
@@ -176,16 +208,66 @@ LC.Model = (function () {
     };
   }
 
-  /* a copy fit to publish: struck entries left out, restricted and embargoed
-     evidence withheld, locations withheld unless marked safe to publish */
+  /* a copy fit to publish: only entries marked publish, never struck ones;
+     restricted and embargoed evidence withheld; places withheld or rounded
+     unless marked exact; relations only between published entries */
   function publicClone() {
     const clone = JSON.parse(JSON.stringify({ project: S.project, records: S.records }));
-    clone.records = clone.records.filter(r => !r.struck);
+    clone.records = clone.records.filter(r => !r.struck && r.publish);
+    const kept = new Set(clone.records.map(r => r.id));
+    const round1 = x => Math.round(x * 10) / 10;
     clone.records.forEach(r => {
       r.evidence = (r.evidence || []).filter(e => e.consent === 'public');
-      if (!r.location || !r.location.safe) r.location = { place: '', lat: null, lon: null, safe: false };
+      r.relations = (r.relations || []).filter(x => kept.has(x.target));
+      const loc = r.location || {};
+      const hasCoords = typeof loc.lat === 'number' && typeof loc.lon === 'number';
+      if (loc.publish === 'exact') {
+        /* published as recorded */
+      } else if (loc.publish === 'approximate') {
+        r.location = { place: loc.place || '', lat: hasCoords ? round1(loc.lat) : null,
+          lon: hasCoords ? round1(loc.lon) : null, publish: 'approximate' };
+      } else {
+        r.location = { place: '', lat: null, lon: null, publish: 'withheld' };
+      }
     });
     return clone;
+  }
+
+  /* how many catalogued entries are held back from publication */
+  function heldBackCount() {
+    return S.records.filter(r => !r.struck && !r.publish).length;
+  }
+
+  /* embargo dates that have passed and want a human decision */
+  function lapsedEmbargoes() {
+    const today = new Date().toISOString().slice(0, 10);
+    const out = [];
+    S.records.forEach(r => (r.evidence || []).forEach(e => {
+      if (e.consent === 'embargoed' && e.until && e.until <= today) {
+        out.push({ recordId: r.id, label: e.label || e.type, until: e.until });
+      }
+    }));
+    return out;
+  }
+
+  /* ---------- loss events ---------- */
+  function eventOf(id) { return (S.project.events || []).find(e => e.id === id) || null; }
+
+  function addEvent() {
+    let max = 0;
+    (S.project.events || []).forEach(e => { const m = /^evt-(\d+)$/.exec(e.id || ''); if (m) max = Math.max(max, +m[1]); });
+    const ev = { id: 'evt-' + (max + 1), name: '', date: '', place: '', note: '' };
+    S.project.events.push(ev);
+    S.project.modified = LC.util.nowISO();
+    return ev;
+  }
+
+  function removeEvent(id) {
+    S.project.events = (S.project.events || []).filter(e => e.id !== id);
+    let cleared = 0;
+    S.records.forEach(r => { if (r.eventId === id) { r.eventId = null; cleared++; } });
+    S.project.modified = LC.util.nowISO();
+    return cleared;
   }
 
   function loadData(data) {
@@ -193,6 +275,9 @@ LC.Model = (function () {
       throw new Error('Not a Lacuna project file.');
     }
     S.project = Object.assign(LC.blankProject(), data.project || {});
+    S.project.events = (Array.isArray(S.project.events) ? S.project.events : [])
+      .filter(e => e && e.id)
+      .map(e => ({ id: e.id, name: e.name || '', date: e.date || '', place: e.place || '', note: e.note || '' }));
     S.records = data.records.map(normalize);
   }
 
@@ -201,7 +286,9 @@ LC.Model = (function () {
     S.records = [];
   }
 
-  return { newRecord, normalize, nextId, get, add, remove, touch, title, altTitles, serialize, publicClone, loadData, reset };
+  return { newRecord, normalize, nextId, get, add, remove, touch, title, altTitles,
+    serialize, publicClone, heldBackCount, lapsedEmbargoes,
+    eventOf, addEvent, removeEvent, loadData, reset };
 })();
 
 /* ---------- autosave in the browser ---------- */

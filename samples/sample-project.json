@@ -7,6 +7,29 @@
     "compiler": "the sample cataloguer",
     "institution": "MIRL Lacuna sample data",
     "contact": "",
+    "events": [
+      {
+        "id": "evt-1",
+        "name": "The winter fire of 1976",
+        "date": "February 1976",
+        "place": "Qamariyya, the studio",
+        "note": "A stove fire in the back room took the studio in a night. What was not burned stood unguarded in the courtyard for a week."
+      },
+      {
+        "id": "evt-2",
+        "name": "The sale and clearing of the shop",
+        "date": "1977",
+        "place": "Qamariyya",
+        "note": "The fittings were sold, and scrap dealers cleared the street the same year."
+      },
+      {
+        "id": "evt-3",
+        "name": "The roof failure at the family house",
+        "date": "1981",
+        "place": "Qamariyya, the family house",
+        "note": "Winter rain came through the stairwell where the exhibition prints hung."
+      }
+    ],
     "note": "Everything in this register is invented: the town of Qamariyya, the Studio al-Qamar, its people, and every loss recorded here. It exists to show how MIRL Lacuna works. Any resemblance to real people, places, archives, or events is coincidental.",
     "created": "2026-06-10T12:00:00.000Z",
     "modified": "2026-06-10T12:00:00.000Z"
@@ -40,11 +63,13 @@
         "portraits",
         "window display"
       ],
+      "eventId": "evt-1",
+      "relations": [],
       "location": {
         "place": "",
         "lat": null,
         "lon": null,
-        "safe": false
+        "publish": "withheld"
       },
       "evidence": [
         {
@@ -77,6 +102,7 @@
         }
       ],
       "copies": [],
+      "publish": true,
       "struck": false,
       "created": "2026-06-10T12:00:00.000Z",
       "modified": "2026-06-10T12:00:00.000Z"
@@ -105,11 +131,13 @@
         "glass plates",
         "negatives"
       ],
+      "eventId": "evt-1",
+      "relations": [],
       "location": {
         "place": "Qamariyya",
         "lat": 34.1,
         "lon": 35.9,
-        "safe": true
+        "publish": "exact"
       },
       "evidence": [
         {
@@ -130,6 +158,7 @@
         }
       ],
       "copies": [],
+      "publish": true,
       "struck": false,
       "created": "2026-06-10T12:00:00.000Z",
       "modified": "2026-06-10T12:00:00.000Z"
@@ -153,16 +182,18 @@
         "place": "Qamariyya, the studio courtyard",
         "source": "a notice in the town paper"
       },
-      "note": "Assembled for the Nahhal family and awaiting collection when the fire came. In the week after, the salvaged stock stood unguarded in the courtyard, and the album was taken with the brass scales and the till. A neighbour's notice in the town paper asked for its return. Nothing came of it.",
+      "note": "Assembled for the Nahhal family and awaiting collection when the fire came. In the week after, the salvaged stock stood unguarded in the courtyard, and the album was taken with the brass scales and the till. A neighbour's notice in the town paper asked for its return. Nothing came of it.\n\nThe family asked that this entry stay out of the published register for now; it is held back, catalogued and counted.",
       "tags": [
         "albums",
         "weddings"
       ],
+      "eventId": "evt-1",
+      "relations": [],
       "location": {
         "place": "last offered for sale inland",
         "lat": 34.4,
         "lon": 36.2,
-        "safe": false
+        "publish": "withheld"
       },
       "evidence": [
         {
@@ -179,6 +210,7 @@
         }
       ],
       "copies": [],
+      "publish": false,
       "struck": false,
       "created": "2026-06-10T12:00:00.000Z",
       "modified": "2026-06-10T12:00:00.000Z"
@@ -207,11 +239,18 @@
         "self-portraits",
         "the first room"
       ],
+      "eventId": null,
+      "relations": [
+        {
+          "type": "part-of",
+          "target": "LAC-0002"
+        }
+      ],
       "location": {
         "place": "",
         "lat": null,
         "lon": null,
-        "safe": false
+        "publish": "withheld"
       },
       "evidence": [
         {
@@ -241,6 +280,7 @@
           "note": "a contact print from the lost plate; the Look button opens the scan"
         }
       ],
+      "publish": true,
       "struck": false,
       "created": "2026-06-10T12:00:00.000Z",
       "modified": "2026-06-10T12:00:00.000Z"
@@ -269,11 +309,13 @@
         "ledgers",
         "daybooks"
       ],
+      "eventId": "evt-2",
+      "relations": [],
       "location": {
         "place": "",
         "lat": null,
         "lon": null,
-        "safe": false
+        "publish": "withheld"
       },
       "evidence": [],
       "copies": [
@@ -294,6 +336,7 @@
           "note": "seen and listed in 2003"
         }
       ],
+      "publish": true,
       "struck": false,
       "created": "2026-06-10T12:00:00.000Z",
       "modified": "2026-06-10T12:00:00.000Z"
@@ -323,14 +366,17 @@
         "negatives",
         "municipal work"
       ],
+      "eventId": null,
+      "relations": [],
       "location": {
         "place": "Qamariyya, municipal deposit",
         "lat": null,
         "lon": null,
-        "safe": false
+        "publish": "withheld"
       },
       "evidence": [],
       "copies": [],
+      "publish": true,
       "struck": false,
       "created": "2026-06-10T12:00:00.000Z",
       "modified": "2026-06-10T12:00:00.000Z"
@@ -363,11 +409,13 @@
         "harbour",
         "exhibition prints"
       ],
+      "eventId": "evt-3",
+      "relations": [],
       "location": {
-        "place": "",
-        "lat": null,
-        "lon": null,
-        "safe": false
+        "place": "Qamariyya, the family house",
+        "lat": 34.18,
+        "lon": 35.97,
+        "publish": "approximate"
       },
       "evidence": [
         {
@@ -388,6 +436,7 @@
         }
       ],
       "copies": [],
+      "publish": true,
       "struck": false,
       "created": "2026-06-10T12:00:00.000Z",
       "modified": "2026-06-10T12:00:00.000Z"
@@ -416,11 +465,13 @@
         "street",
         "contact sheets"
       ],
+      "eventId": "evt-1",
+      "relations": [],
       "location": {
         "place": "",
         "lat": null,
         "lon": null,
-        "safe": false
+        "publish": "withheld"
       },
       "evidence": [
         {
@@ -441,6 +492,7 @@
         }
       ],
       "copies": [],
+      "publish": true,
       "struck": false,
       "created": "2026-06-10T12:00:00.000Z",
       "modified": "2026-06-10T12:00:00.000Z"
@@ -469,11 +521,13 @@
         "ledgers",
         "sitters"
       ],
+      "eventId": "evt-2",
+      "relations": [],
       "location": {
         "place": "",
         "lat": null,
         "lon": null,
-        "safe": false
+        "publish": "withheld"
       },
       "evidence": [
         {
@@ -490,6 +544,7 @@
         }
       ],
       "copies": [],
+      "publish": true,
       "struck": false,
       "created": "2026-06-10T12:00:00.000Z",
       "modified": "2026-06-10T12:00:00.000Z"
@@ -522,14 +577,17 @@
         "signage",
         "the shopfront"
       ],
+      "eventId": "evt-2",
+      "relations": [],
       "location": {
         "place": "",
         "lat": null,
         "lon": null,
-        "safe": false
+        "publish": "withheld"
       },
       "evidence": [],
       "copies": [],
+      "publish": true,
       "struck": false,
       "created": "2026-06-10T12:00:00.000Z",
       "modified": "2026-06-10T12:00:00.000Z"
@@ -557,14 +615,17 @@
       "tags": [
         "the back room"
       ],
+      "eventId": "evt-2",
+      "relations": [],
       "location": {
         "place": "",
         "lat": null,
         "lon": null,
-        "safe": false
+        "publish": "withheld"
       },
       "evidence": [],
       "copies": [],
+      "publish": true,
       "struck": false,
       "created": "2026-06-10T12:00:00.000Z",
       "modified": "2026-06-10T12:00:00.000Z"
@@ -598,11 +659,13 @@
         "villages",
         "harvests"
       ],
+      "eventId": "evt-1",
+      "relations": [],
       "location": {
         "place": "Tal Maja",
         "lat": 33.8,
         "lon": 36.4,
-        "safe": true
+        "publish": "exact"
       },
       "evidence": [],
       "copies": [
@@ -615,6 +678,7 @@
           "note": "rebound; pages complete"
         }
       ],
+      "publish": true,
       "struck": false,
       "created": "2026-06-10T12:00:00.000Z",
       "modified": "2026-06-10T12:00:00.000Z"
@@ -643,14 +707,22 @@
         "ledgers",
         "daybooks"
       ],
+      "eventId": "evt-2",
+      "relations": [
+        {
+          "type": "related",
+          "target": "LAC-0005"
+        }
+      ],
       "location": {
         "place": "",
         "lat": null,
         "lon": null,
-        "safe": false
+        "publish": "withheld"
       },
       "evidence": [],
       "copies": [],
+      "publish": false,
       "struck": true,
       "created": "2026-06-10T12:00:00.000Z",
       "modified": "2026-06-10T12:00:00.000Z"

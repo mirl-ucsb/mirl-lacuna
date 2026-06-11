@@ -21,6 +21,7 @@ authors:
       Architecture, University of California, Santa Barbara
 version: "1.4.2"
 date-released: "2026-06-11"
+doi: 10.5281/zenodo.20651020
 license: MIT
 repository-code: "https://github.com/mirl-ucsb/mirl-lacuna"
 url: "https://mirl-ucsb.github.io/mirl-lacuna/"

@@ -9,7 +9,9 @@ version load cleanly in any later one.
 
 - Releases are archived on [Zenodo](https://zenodo.org) from this version
   onward, each minting a DOI, so the register can be cited the way it asks
-  others to cite.
+  others to cite. The concept DOI
+  [10.5281/zenodo.20651020](https://doi.org/10.5281/zenodo.20651020) always
+  resolves to the latest version.
 - Housekeeping for the public record: this CHANGELOG, the archive metadata,
   and the repository's homepage link to the live copy.
 

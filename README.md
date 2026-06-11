@@ -419,12 +419,15 @@ mirl-lacuna/
 
 This repository carries a [`CITATION.cff`](CITATION.cff) file, so GitHub's
 **Cite this repository** button (in the sidebar of the repo page) will give
-you a reference in APA or BibTeX form. A [`CHANGELOG`](CHANGELOG.md) records
-each release, nothing erased. In a note, cite it as:
+you a reference in APA or BibTeX form. Every release is archived on
+[Zenodo](https://doi.org/10.5281/zenodo.20651020); the DOI
+`10.5281/zenodo.20651020` always resolves to the latest version. A
+[`CHANGELOG`](CHANGELOG.md) records each release, nothing erased. In a
+note, cite it as:
 
 > Jeff O'Brien, *MIRL Lacuna: a catalogue of an absent archive*, version
 > 1.4.2, Material / Image Research Lab, UC Santa Barbara, 2026,
-> https://github.com/mirl-ucsb/mirl-lacuna.
+> https://doi.org/10.5281/zenodo.20651020.
 
 ---
 

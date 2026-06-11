@@ -16,7 +16,13 @@ or one community at a time. **You do not need to know how to code to use it.**
 
 The tool opens with a small sample already loaded, the register of an entirely
 fictional photographic studio, so you can see how everything works before you
-add anything of your own.
+add anything of your own. A live copy runs at
+[mirl-ucsb.github.io/mirl-lacuna](https://mirl-ucsb.github.io/mirl-lacuna/).
+
+![The register: a ruled ledger of the sample archive, with stamped statuses, a held-back entry, and batch selection](docs/register.png)
+
+*The register, opened on the fictional sample: stamped statuses, certainty
+marks, a held-back entry, and checkboxes for batch work.*
 
 ---
 
@@ -62,22 +68,38 @@ through, kept out of every export, restorable at any time, and its number is
 never reused. (Outright removal exists for mistaken entries, behind a
 confirmation.)
 
+![A memorial notice: entry LAC-0001 inside its mourning frame, with the destroyed stamp, an Arabic parallel title, the loss event, and consent-marked evidence](docs/entry.png)
+
+*A memorial notice: the stamp, the Arabic parallel title, the loss event,
+and evidence with its sha-256 fingerprint, thumbnail, and consent marks.*
+
 **Timeline.** The chronology of disappearance: every entry ordered by the
 moment it was last seen, year by year, with the loss events set among them as
 notices. The events themselves (a fire, a sale, a flood) are kept on this
 folio: name, date, place, and a note, so the destruction is treated as a
 historical object in its own right, not a phrase repeated across records.
 
+![The timeline: entries year by year, with the winter fire of 1976 set among them as a bordered loss-event notice](docs/timeline.png)
+
+*The chronicle: each thing at the moment it was last seen, with the loss
+events set among the entries.*
+
 **Statistics.** The reckoning: counts by status, by certainty, by consent,
 and by loss event, set with tally strokes.
+
+![Statistics: counted entries and tally strokes by loss event](docs/statistics.png)
 
 **Atlas.** Places of last record on a world plate, with a gazetteer beneath.
 Only places marked for publication are ever plotted; the rest are counted,
 not shown.
 
+![The atlas: an equirectangular world plate with the published places of last record](docs/atlas.png)
+
 **Index.** The back of the book: alphabetical indexes of creators, tags, and
 places, each line pointing to its entry numbers with dotted leaders, the way
 a printed register ends.
+
+![The index: creators, tags, and places with dotted leaders pointing to entry numbers](docs/indexfolio.png)
 
 ---
 
@@ -171,6 +193,8 @@ a dealer's list, an accession ledger. From the **Project** menu:
   folder and it verifies each against the sha-256 fingerprint recorded when
   it was attached: a fixity check, in the preservation sense. Single items
   can also be verified from their entry.
+
+---
 
 ## Saving and exporting
 
@@ -317,7 +341,8 @@ mirl-lacuna/
 │   └── app.js          # routes, menus, dialogs, wiring
 ├── vendor/             # openseadragon.min.js · land.js (+ its generator)
 ├── fonts/              # Spectral, IBM Plex Mono, Noto Naskh Arabic (woff2)
-└── samples/            # the fictional studio register + its generator
+├── samples/            # the fictional studio register + its generator
+└── docs/               # the screenshots in this README
 ```
 
 ---

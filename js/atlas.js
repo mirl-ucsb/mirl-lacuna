@@ -30,7 +30,7 @@ LC.Atlas = (function () {
 
   function html(data, opts) {
     opts = opts || {};
-    const rs = data.records || [];
+    const rs = (data.records || []).filter(r => !r.struck);   /* cancelled lines are not plotted */
     const located = rs.filter(r => r.location && (r.location.place || (typeof r.location.lat === 'number' && typeof r.location.lon === 'number')));
     const safe = located.filter(r => r.location.safe);
     const points = safe.filter(r => typeof r.location.lat === 'number' && typeof r.location.lon === 'number')

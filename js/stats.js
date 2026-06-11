@@ -31,7 +31,9 @@ LC.Stats = (function () {
 
   function html(data, opts) {
     opts = opts || {};
-    const rs = data.records || [];
+    const all = data.records || [];
+    const rs = all.filter(r => !r.struck);     /* struck entries are cancelled lines, not counts */
+    const struckN = all.length - rs.length;
     const evidence = rs.flatMap(r => r.evidence || []);
     const copies = rs.flatMap(r => r.copies || []);
     const located = rs.filter(r => r.location && (r.location.place || (typeof r.location.lat === 'number' && typeof r.location.lon === 'number')));
@@ -80,7 +82,9 @@ LC.Stats = (function () {
       h += '</table>';
       h += '<p class="stats-note">Restricted and embargoed evidence is counted here but never exported. ' +
         'Of the ' + located.length + ' recorded ' + (located.length === 1 ? 'place' : 'places') + ', ' +
-        safe.length + (safe.length === 1 ? ' is' : ' are') + ' marked safe to publish.</p>';
+        safe.length + (safe.length === 1 ? ' is' : ' are') + ' marked safe to publish.' +
+        (struckN ? ' ' + struckN + ' struck ' + (struckN === 1 ? 'entry remains' : 'entries remain') +
+          ' in the ledger as cancelled lines, outside these counts and every export.' : '') + '</p>';
     } else {
       h += '<p class="stats-note">Counts cover the published register. Evidence held under restriction, and places not marked safe to publish, are reflected in the working register only.</p>';
     }

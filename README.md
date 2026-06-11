@@ -51,6 +51,12 @@ surviving copies. It is a tombstone, not a 404. Below the notice sits **the
 cataloguer's desk**, the working form; everything you type appears in the
 notice above as you type it.
 
+Entries are **struck, not deleted**. A real ledger never erases; it cancels
+visibly. A struck entry stays in the register as a cancelled line, ruled
+through, kept out of every export, restorable at any time, and its number is
+never reused. (Outright removal exists for mistaken entries, behind a
+confirmation.)
+
 **Statistics.** The reckoning: counts by status, by certainty, and by consent,
 set with tally strokes.
 
@@ -172,10 +178,11 @@ To regenerate the sample, run `python3 samples/make-samples.py` (needs
 - **Hashing** uses WebCrypto's SHA-256 with a small pure-JS fallback.
   Thumbnails are made on a canvas at 280 px and stored as compact JPEG data
   URLs inside the project file.
-- **Exports** are filtered through a public clone of the data: evidence is
-  kept only when its consent state is `public`, and locations are kept only
-  when `safe` is true. The finding aid inlines the stylesheet and embeds the
-  fonts as data URLs, so the single file stands alone.
+- **Exports** are filtered through a public clone of the data: struck entries
+  are left out, evidence is kept only when its consent state is `public`, and
+  locations are kept only when `safe` is true. The finding aid inlines the
+  stylesheet and embeds the fonts as data URLs, so the single file stands
+  alone.
 - **Deep zoom and IIIF** are handled by
   [OpenSeadragon](https://openseadragon.github.io) (vendored in `vendor/`,
   no network needed). IIIF Image `info.json` addresses are used directly;
@@ -222,7 +229,7 @@ This repository carries a [`CITATION.cff`](CITATION.cff) file, so GitHub's
 you a reference in APA or BibTeX form. In a note, cite it as:
 
 > Jeff O'Brien, *MIRL Lacuna: a catalogue of an absent archive*, version
-> 1.0.0, Material / Image Research Lab, UC Santa Barbara, 2026,
+> 1.1.0, Material / Image Research Lab, UC Santa Barbara, 2026,
 > https://github.com/mirl-ucsb/mirl-lacuna.
 
 ---

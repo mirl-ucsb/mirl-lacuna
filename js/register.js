@@ -26,8 +26,8 @@ LC.Register = (function () {
     let titleCell = '<span class="t"' + dirAttr(t) + '>' + U.esc(t) + '</span>';
     alts.forEach(a => { titleCell += '<span class="t2"' + dirAttr(a.text) + (a.lang ? ' lang="' + U.esc(a.lang) + '"' : '') + '>' + U.esc(a.text) + '</span>'; });
     if (r.creator) titleCell += '<span class="by">' + U.esc(r.creator) + '</span>';
-    return '<tr class="entry" data-id="' + U.esc(r.id) + '">' +
-      '<td class="no">' + U.esc(r.id) + '</td>' +
+    return '<tr class="entry' + (r.struck ? ' struck' : '') + '" data-id="' + U.esc(r.id) + '">' +
+      '<td class="no">' + U.esc(r.id) + (r.struck ? '<span class="struck-flag">struck</span>' : '') + '</td>' +
       '<td class="title">' + titleCell + '</td>' +
       '<td class="mono">' + U.esc(r.date) + '</td>' +
       '<td>' + U.esc(r.medium) + '</td>' +
@@ -128,7 +128,7 @@ LC.Register = (function () {
 
     const marks = U.h('div', { class: 'marks' });
     LC.vocab.STATUS.forEach(st => {
-      const n = S.records.filter(r => r.status === st.key).length;
+      const n = S.records.filter(r => r.status === st.key && !r.struck).length;
       const b = U.h('button', {
         class: 'mark ' + st.cls + (S.filters.statuses.includes(st.key) ? ' on' : ''),
         title: 'Show only ' + st.label.toLowerCase() + ' entries',
@@ -153,9 +153,14 @@ LC.Register = (function () {
     const rs = visible();
     host.innerHTML = tableHTML(rs, {});
     const count = document.getElementById('register-count');
-    count.textContent = rs.length === S.records.length
-      ? S.records.length + (S.records.length === 1 ? ' entry' : ' entries')
-      : rs.length + ' of ' + S.records.length + ' entries shown';
+    const live = S.records.filter(r => !r.struck).length;
+    const shownLive = rs.filter(r => !r.struck).length;
+    const shownStruck = rs.length - shownLive;
+    let txt = shownLive === live
+      ? live + (live === 1 ? ' entry' : ' entries')
+      : shownLive + ' of ' + live + ' entries shown';
+    if (shownStruck) txt += ' · ' + shownStruck + ' struck ' + (shownStruck === 1 ? 'line' : 'lines');
+    count.textContent = txt;
 
     const emptyCell = document.getElementById('register-empty-cell');
     if (emptyCell) {

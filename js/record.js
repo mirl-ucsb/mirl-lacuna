@@ -87,7 +87,9 @@ LC.Tombstone = (function () {
 
     let h = '<div class="tombstone"><div class="inner">';
     h += '<div class="ts-top"><div class="ts-no">Entry ' + U.esc(r.id) + '</div>' +
-      '<div class="ts-stamp"><span class="mark ' + st.cls + '">' + U.esc(st.label) + '</span></div></div>';
+      '<div class="ts-stamp"><span class="mark ' + st.cls + '">' + U.esc(st.label) + '</span>' +
+      (r.struck ? '<span class="mark st-struck">Struck from the register</span>' : '') +
+      '</div></div>';
     h += '<h2 class="ts-title"' + dirAttr(title) + '>' + U.esc(title) + '</h2>';
     alts.forEach(a => {
       h += '<div class="ts-title-alt"' + dirAttr(a.text) + (a.lang ? ' lang="' + U.esc(a.lang) + '"' : '') + '>' + U.esc(a.text) + '</div>';
@@ -488,6 +490,47 @@ LC.Desk = (function () {
       }, '+ Add a surviving copy')));
   }
 
+  /* ----- striking out: a ledger cancels, it does not erase ----- */
+  function strikeSect(r) {
+    if (!r.struck) {
+      return sect('Striking out', null,
+        U.h('button', {
+          class: 'btn danger', onclick: () => {
+            r.struck = true;
+            LC.App.entryChanged(r, true);
+            U.toast('Entry ' + r.id + ' struck: it stays as a cancelled line');
+            LC.Record.render(r.id);
+            window.scrollTo(0, 0);
+          },
+        }, 'Strike this entry from the register'),
+        U.h('div', { class: 'note', style: { marginTop: '10px' } },
+          'A struck entry stays in the ledger as a cancelled line: visible here, kept out of every export, restorable at any time. Its number is never reused. If the loss itself should stay on record, change the status instead.'));
+    }
+    return sect('Struck out', 'this entry is a cancelled line',
+      U.h('div', { style: { display: 'flex', gap: '14px', flexWrap: 'wrap' } },
+        U.h('button', {
+          class: 'btn', onclick: () => {
+            r.struck = false;
+            LC.App.entryChanged(r, true);
+            U.toast('Entry ' + r.id + ' restored to the register');
+            LC.Record.render(r.id);
+            window.scrollTo(0, 0);
+          },
+        }, 'Restore this entry'),
+        U.h('button', {
+          class: 'btn danger', onclick: () => {
+            if (confirm('Remove entry ' + r.id + ' from the project entirely? Unlike striking, this cannot be undone.')) {
+              LC.Model.remove(r.id);
+              LC.Store.save();
+              U.toast('Entry ' + r.id + ' removed from the project');
+              location.hash = '#/register';
+            }
+          },
+        }, 'Remove it outright')),
+      U.h('div', { class: 'note', style: { marginTop: '10px' } },
+        'Restoring returns the entry to the register and its exports. Removing it outright erases it from the project file: for mistaken entries, not for losses.'));
+  }
+
   /* ----- the whole desk ----- */
   function build(r) {
     const desk = U.h('div', { class: 'desk' });
@@ -541,19 +584,7 @@ LC.Desk = (function () {
     desk.append(evidenceSect(r));
     desk.append(copiesSect(r));
 
-    desk.append(sect('Striking out', null,
-      U.h('button', {
-        class: 'btn danger', onclick: () => {
-          if (confirm('Strike entry ' + r.id + ' from the register? This removes it from the project.')) {
-            LC.Model.remove(r.id);
-            LC.Store.save();
-            U.toast('Entry ' + r.id + ' struck from the register');
-            location.hash = '#/register';
-          }
-        },
-      }, 'Strike this entry from the register'),
-      U.h('div', { class: 'note', style: { marginTop: '10px' } },
-        'Striking an entry removes it outright. If the loss itself should stay on record, change its status instead.')));
+    desk.append(strikeSect(r));
 
     return desk;
   }

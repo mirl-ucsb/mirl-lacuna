@@ -301,6 +301,7 @@ def rec(n, **kw):
         "note": "", "tags": [],
         "location": {"place": "", "lat": None, "lon": None, "safe": False},
         "evidence": [], "copies": [],
+        "struck": False,
         "created": T, "modified": T,
     }
     base.update(kw)
@@ -488,6 +489,15 @@ records = [
         copies=[
             cp("Tal Maja village association", "the anniversary copy", note="rebound; pages complete"),
         ]),
+
+    rec(13,
+        titles=[{"text": "Studio daybook, 1947 to 1953 (entered twice)", "lang": "en"}],
+        creator="Studio al-Qamar", date="1947 to 1953", medium="ledger volume", origin=STUDIO,
+        status="dispersed", certainty="probable",
+        note=("Entered a second time by mistake; the daybook is recorded at entry LAC-0005. "
+              "Struck rather than erased, in the ledger's manner, so the numbering stands."),
+        tags=["ledgers", "daybooks"],
+        struck=True),
 ]
 
 project = {

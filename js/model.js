@@ -111,6 +111,7 @@ LC.Model = (function () {
       note: '', tags: [],
       location: { place: '', lat: null, lon: null, safe: false },
       evidence: [], copies: [],
+      struck: false,   /* a struck entry stays as a cancelled line; never erased */
       created: LC.util.nowISO(), modified: LC.util.nowISO(),
     };
   }
@@ -175,10 +176,11 @@ LC.Model = (function () {
     };
   }
 
-  /* a copy fit to publish: restricted and embargoed evidence withheld,
-     locations withheld unless marked safe to publish */
+  /* a copy fit to publish: struck entries left out, restricted and embargoed
+     evidence withheld, locations withheld unless marked safe to publish */
   function publicClone() {
     const clone = JSON.parse(JSON.stringify({ project: S.project, records: S.records }));
+    clone.records = clone.records.filter(r => !r.struck);
     clone.records.forEach(r => {
       r.evidence = (r.evidence || []).filter(e => e.consent === 'public');
       if (!r.location || !r.location.safe) r.location = { place: '', lat: null, lon: null, safe: false };

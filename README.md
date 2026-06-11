@@ -38,11 +38,16 @@ add anything of your own.
 
 ---
 
-## The five folios
+## The six folios
 
 **Register.** The whole archive as a ruled table: number, title, date, medium,
 originating collection, status, certainty, last seen. Search it, filter it by
 status with the stamped marks, sort it, and click any line to open the entry.
+Tick several lines and a batch bar appears for assigning an event, adding a
+tag, or setting a status across all of them at once, which matters right
+after an import when forty entries belong to the same fire. Publication is
+deliberately not among the batch actions: that consent is given one entry at
+a time.
 
 **Entry.** Each record is set as a memorial notice inside a mourning frame:
 the title (in any language), what the thing was, what became of it, when it
@@ -67,8 +72,12 @@ historical object in its own right, not a phrase repeated across records.
 and by loss event, set with tally strokes.
 
 **Atlas.** Places of last record on a world plate, with a gazetteer beneath.
-Only places marked **safe to publish** are ever plotted; the rest are counted,
+Only places marked for publication are ever plotted; the rest are counted,
 not shown.
+
+**Index.** The back of the book: alphabetical indexes of creators, tags, and
+places, each line pointing to its entry numbers with dotted leaders, the way
+a printed register ends.
 
 ---
 
@@ -105,6 +114,10 @@ and Lacuna records:
   leaves your machine; the register keeps its name, the hash, and (for
   images) a small thumbnail.
 - **rights** and a **consent state**: public, restricted, or embargoed.
+- for web evidence, a **Wayback snapshot** on request: one click asks the
+  Internet Archive to save the address now, and the archived copy's address
+  is kept beside the original, so the evidence survives its source going
+  dark.
 
 **Restricted and embargoed evidence never enters an export.** Not the CSV,
 not the public data file, not the finding aid. It lives only in your own
@@ -151,6 +164,9 @@ a dealer's list, an accession ledger. From the **Project** menu:
   involved, then one merges the other's file. New entries are added; where
   the same entry differs in both registers, the conflicts are laid out side
   by side and you choose which version stands, with the newer one suggested.
+- After either, Lacuna quietly flags **possible duplicates**: new entries
+  whose title and creator match an existing one, with a one-click choice to
+  relate them, strike the newcomer as a duplicate, or keep both.
 - **Check evidence files.** Point Lacuna at the files in your evidence
   folder and it verifies each against the sha-256 fingerprint recorded when
   it was attached: a fixity check, in the preservation sense. Single items
@@ -162,12 +178,28 @@ Your register is **one JSON file**, edited in the browser and autosaved
 locally as you work. From the **Project** menu you can save it to disk and
 open it again anywhere; nothing is uploaded, ever.
 
+Two more layers of fieldwork insurance:
+
+- **Keep the file on disk.** In Chromium browsers (Chrome, Edge), Lacuna can
+  save continuously to a `.json` you choose, alongside the browser autosave,
+  and offer to resume the same file next session. Elsewhere the menu item
+  simply does not appear and the autosave carries on.
+- **It works offline.** After the first visit, the whole tool (fonts and
+  sample included) is cached in the browser, so the register opens and works
+  with no connection at all.
+
 From the **Export** menu:
 
 - **Finding aid (.html)**: the whole register as a single, self-contained
   page (fonts included), ready for a website, an email attachment, or a USB
-  stick. It carries the register, every notice, the statistics, and the
-  atlas, with all restricted material and unpublished places withheld.
+  stick. It carries the register, every notice, the timeline, the statistics,
+  the atlas, and the index, with all restricted material and unpublished
+  places withheld.
+- **Print as a memorial book**: the register composed for paper, through the
+  browser's print dialog (choose *Save as PDF*). A cover leaf from the front
+  matter, one notice per page, and the register and index as appendices: the
+  thing communities hand each other at meetings. Consent applies as in every
+  export.
 - **Spreadsheet (.csv)** of the register, for sorting and counting elsewhere.
 - **Public data (.json)**, the machine-readable register with consent applied.
 - **Print this view**, for paper copies of the register or a single notice.
@@ -252,15 +284,24 @@ To regenerate the sample, run `python3 samples/make-samples.py` (needs
   per-string direction detection in the rendered notice; Arabic text is set
   in Noto Naskh Arabic, vendored alongside Spectral and IBM Plex Mono in
   `fonts/`.
+- **The live file on disk** uses the File System Access API where it exists,
+  with the file handle kept in IndexedDB so the same file can be resumed
+  (with your permission) next session. The browser autosave is unaffected
+  and remains the fallback everywhere else.
+- **Offline use** is a small hand-written service worker (`sw.js`): code and
+  styles fetch network-first so updates arrive when there is a connection;
+  fonts, vendored libraries, and the sample images are cache-first.
 - **No data leaves your machine.** Everything runs in the browser. The only
   network requests Lacuna ever makes are the ones you ask for: opening a
-  IIIF copy, or fetching a URL to hash it.
+  IIIF copy, fetching a URL to hash it, or asking the Internet Archive to
+  save one.
 
 ### Layout
 
 ```
 mirl-lacuna/
 ├── index.html          # the page
+├── sw.js               # offline support
 ├── css/style.css       # the ledger
 ├── js/
 │   ├── model.js        # vocabularies, state, autosave, sha-256, thumbnails
@@ -269,9 +310,10 @@ mirl-lacuna/
 │   ├── timeline.js     # the chronicle, and the keeping of loss events
 │   ├── stats.js        # tallies
 │   ├── atlas.js        # the world plate and gazetteer
+│   ├── indexes.js      # the back of the book
 │   ├── citation.js     # Chicago / MLA / APA / BibTeX per entry
-│   ├── importers.js    # CSV import, project merge, fixity checks
-│   ├── exporters.js    # finding aid, CSV, public JSON, project file
+│   ├── importers.js    # CSV import, project merge, duplicates, fixity
+│   ├── exporters.js    # finding aid, memorial book, CSV, public JSON
 │   └── app.js          # routes, menus, dialogs, wiring
 ├── vendor/             # openseadragon.min.js · land.js (+ its generator)
 ├── fonts/              # Spectral, IBM Plex Mono, Noto Naskh Arabic (woff2)
@@ -287,7 +329,7 @@ This repository carries a [`CITATION.cff`](CITATION.cff) file, so GitHub's
 you a reference in APA or BibTeX form. In a note, cite it as:
 
 > Jeff O'Brien, *MIRL Lacuna: a catalogue of an absent archive*, version
-> 1.2.0, Material / Image Research Lab, UC Santa Barbara, 2026,
+> 1.3.0, Material / Image Research Lab, UC Santa Barbara, 2026,
 > https://github.com/mirl-ucsb/mirl-lacuna.
 
 ---

@@ -14,6 +14,7 @@ LC.App = (function () {
     if (h === '#/timeline') return { view: 'timeline', id: null };
     if (h === '#/statistics') return { view: 'statistics', id: null };
     if (h === '#/atlas') return { view: 'atlas', id: null };
+    if (h === '#/index') return { view: 'index', id: null };
     return { view: 'register', id: null };
   }
 
@@ -23,7 +24,7 @@ LC.App = (function () {
     if (r.view === 'entry' && r.id) S.route.id = r.id;
     S.route.view = r.view;
 
-    ['register', 'entry', 'timeline', 'statistics', 'atlas'].forEach(v => {
+    ['register', 'entry', 'timeline', 'statistics', 'atlas', 'index'].forEach(v => {
       const sect = document.getElementById('view-' + v);
       if (sect) sect.classList.toggle('hidden', v !== r.view);
       const btn = document.querySelector('nav.folio button[data-view="' + v + '"]');
@@ -35,6 +36,7 @@ LC.App = (function () {
     else if (r.view === 'timeline') LC.Timeline.render();
     else if (r.view === 'statistics') LC.Stats.render();
     else if (r.view === 'atlas') LC.Atlas.render();
+    else if (r.view === 'index') LC.Indexes.render();
     window.scrollTo(0, 0);
   }
 
@@ -127,6 +129,48 @@ LC.App = (function () {
   }
 
   /* ---------- bringing work in ---------- */
+
+  /* possible duplicates, quietly raised after an import or merge */
+  function offerDuplicates(newIds) {
+    const pairs = LC.Importers.findDuplicates(newIds);
+    if (!pairs.length) return;
+    const body = U.h('div');
+    body.append(U.h('p', { class: 'hint', style: { marginTop: '12px' } },
+      (pairs.length === 1 ? 'One new entry shares' : pairs.length + ' new entries share') +
+      ' a title and creator with an entry already in the register. Relate them, strike the new one as a duplicate, or keep both.'));
+    pairs.forEach(pr => {
+      const row = U.h('div', { class: 'conflict' },
+        U.h('div', { class: 'cid' }, pr.fresh.id + ' · possible duplicate of ' + pr.existing.id),
+        U.h('div', { class: 'sum', style: { fontSize: '15px', color: 'var(--ink-2)', marginBottom: '10px' } },
+          LC.Model.title(pr.fresh) + (pr.fresh.creator ? ' · ' + pr.fresh.creator : '')));
+      const acts = U.h('div', { style: { display: 'flex', gap: '12px', flexWrap: 'wrap' } });
+      const done = note => {
+        acts.innerHTML = '';
+        acts.append(U.h('span', { class: 'hint', style: { fontStyle: 'italic' } }, note));
+        LC.Store.save();
+      };
+      acts.append(
+        U.h('button', {
+          class: 'btn', onclick: () => {
+            pr.fresh.relations.push({ type: 'related', target: pr.existing.id });
+            LC.Model.touch(pr.fresh);
+            done('related to ' + pr.existing.id);
+          },
+        }, 'Relate them'),
+        U.h('button', {
+          class: 'btn danger', onclick: () => {
+            pr.fresh.struck = true;
+            LC.Model.touch(pr.fresh);
+            done(pr.fresh.id + ' struck as a duplicate');
+          },
+        }, 'Strike the new one'),
+        U.h('button', { class: 'btn quiet', onclick: () => done('kept both') }, 'Keep both'));
+      row.append(acts);
+      body.append(row);
+    });
+    sheet('Possible duplicates', body, [{ label: 'Done', onclick: () => { route(); } }]);
+  }
+
   function importCSVFile(file) {
     const reader = new FileReader();
     reader.onload = () => {
@@ -139,6 +183,7 @@ LC.App = (function () {
         U.toast(msg);
         if (res.unmatched.length) setTimeout(() =>
           U.toast('Columns not understood: ' + res.unmatched.slice(0, 4).join(', ') + (res.unmatched.length > 4 ? '…' : '')), 2600);
+        offerDuplicates(res.ids);
       } catch (e) {
         U.toast(e.message || 'That file could not be read as a CSV');
       }
@@ -160,6 +205,7 @@ LC.App = (function () {
         U.toast('Merged: ' + plan.newRecords.length + ' new, ' +
           plan.conflicts.length + ' reconciled, ' + plan.identical + ' identical' +
           (plan.newEvents.length ? ', ' + plan.newEvents.length + ' events' : ''));
+        if (plan.newRecords.length) setTimeout(() => offerDuplicates(plan.newRecords.map(r => r.id)), 400);
       };
       const choices = {};
       if (!plan.conflicts.length) {
@@ -226,6 +272,34 @@ LC.App = (function () {
     input.click();
   }
 
+  /* ---------- the live file on disk ---------- */
+  function updateDiskItem() {
+    const item = document.getElementById('disk-item');
+    if (!item) return;
+    const st = LC.Disk.state();
+    if (st.mode === 'unsupported') { item.style.display = 'none'; return; }
+    item.style.display = '';
+    if (st.mode === 'active') {
+      item.innerHTML = 'Stop saving to disk<small>now saving to ' + U.esc(st.name) + ' as you work</small>';
+    } else if (st.mode === 'pending') {
+      item.innerHTML = 'Resume saving to disk<small>pick up ' + U.esc(st.name) + ' from last time</small>';
+    } else {
+      item.innerHTML = 'Keep the file on disk<small>save continuously to a .json you choose, alongside the browser autosave</small>';
+    }
+  }
+
+  async function diskAction() {
+    const st = LC.Disk.state();
+    try {
+      if (st.mode === 'active') await LC.Disk.disconnect();
+      else if (st.mode === 'pending') await LC.Disk.resume();
+      else await LC.Disk.connect();
+    } catch (e) {
+      if (e && e.name !== 'AbortError') U.toast('Could not open the file: ' + (e.message || e));
+    }
+    updateDiskItem();
+  }
+
   /* ---------- menus ---------- */
   function closeMenus() {
     document.querySelectorAll('.menu').forEach(m => m.classList.add('hidden'));
@@ -272,6 +346,7 @@ LC.App = (function () {
       if (act === 'new') newProject();
       else if (act === 'open') { const i = document.getElementById('project-input'); i.value = ''; i.click(); }
       else if (act === 'save') LC.Exporters.saveProject();
+      else if (act === 'disk') diskAction();
       else if (act === 'csv') { const i = document.getElementById('csv-input'); i.value = ''; i.click(); }
       else if (act === 'merge') { const i = document.getElementById('merge-input'); i.value = ''; i.click(); }
       else if (act === 'fixity') { const i = document.getElementById('fixity-input'); i.value = ''; i.click(); }
@@ -284,6 +359,7 @@ LC.App = (function () {
       if (act === 'csv') LC.Exporters.registerCSV();
       else if (act === 'json') LC.Exporters.publicJSON();
       else if (act === 'aid') LC.Exporters.findingAid();
+      else if (act === 'book') LC.Exporters.printBook();
       else if (act === 'print') window.print();
     });
 
@@ -314,6 +390,16 @@ LC.App = (function () {
       setTimeout(() => U.toast(
         (lapsed.length === 1 ? 'An embargo date has passed' : lapsed.length + ' embargo dates have passed') +
         ': review ' + ids.slice(0, 3).join(', ') + (ids.length > 3 ? '…' : '')), 900);
+    }
+
+    /* remember a live file from last session, if there was one */
+    updateDiskItem();
+    LC.Disk.init().then(updateDiskItem).catch(() => {});
+
+    /* offline: a service worker caches the tool after the first visit */
+    if ('serviceWorker' in navigator &&
+        (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
     }
   }
 

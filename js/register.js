@@ -6,6 +6,7 @@
 LC.Register = (function () {
   const S = LC.state;
   const U = LC.util;
+  const selected = new Set();   /* entry ids picked for batch work; session only */
 
   /* ---------- pure renderers (shared with the export) ---------- */
 
@@ -28,7 +29,11 @@ LC.Register = (function () {
     if (r.creator) titleCell += '<span class="by">' + U.esc(r.creator) + '</span>';
     const flag = r.struck ? '<span class="struck-flag">struck</span>'
       : (!r.publish && !opts.static ? '<span class="held-flag">held back</span>' : '');
+    const selCell = opts.selectable
+      ? '<td class="sel"><input type="checkbox" data-sel="' + U.esc(r.id) + '"' + (selected.has(r.id) ? ' checked' : '') + '></td>'
+      : '';
     return '<tr class="entry' + (r.struck ? ' struck' : '') + '" data-id="' + U.esc(r.id) + '">' +
+      selCell +
       '<td class="no">' + U.esc(r.id) + flag + '</td>' +
       '<td class="title">' + titleCell + '</td>' +
       '<td class="mono">' + U.esc(r.date) + '</td>' +
@@ -48,6 +53,7 @@ LC.Register = (function () {
       [null, 'Originating collection'], ['status', 'Status'], [null, 'Certainty'], [null, 'Last seen'],
     ];
     let h = '<table class="register"><thead><tr>';
+    if (opts.selectable) h += '<th class="sel" style="cursor:default"><input type="checkbox" id="sel-all" title="Select every entry shown"></th>';
     cols.forEach(([key, label]) => {
       const isSorted = sortable && key && S.sort.by === key;
       h += '<th' + (sortable && key ? ' data-sort="' + key + '"' : ' style="cursor:default"') + '>' +
@@ -55,7 +61,7 @@ LC.Register = (function () {
     });
     h += '</tr></thead><tbody>';
     if (!records.length) {
-      h += '<tr><td colspan="8" class="register-empty" id="register-empty-cell"></td></tr>';
+      h += '<tr><td colspan="' + (opts.selectable ? 9 : 8) + '" class="register-empty" id="register-empty-cell"></td></tr>';
     } else {
       records.forEach(r => { h += rowHTML(r, opts); });
     }
@@ -150,10 +156,65 @@ LC.Register = (function () {
     return wrap;
   }
 
+  /* ----- batch work: event, tag, status for many entries at once.
+     Publication stays deliberate, one entry at a time. ----- */
+  function applyBatch(fn, what) {
+    let n = 0;
+    selected.forEach(id => {
+      const r = LC.Model.get(id);
+      if (r && fn(r) !== false) { LC.Model.touch(r); n++; }
+    });
+    LC.Store.save();
+    renderTable();
+    U.toast(what + ' on ' + n + (n === 1 ? ' entry' : ' entries'));
+  }
+
+  function batchline() {
+    const bar = document.getElementById('register-batch');
+    bar.innerHTML = '';
+    if (!selected.size) return;
+    const wrap = U.h('div', { class: 'batchline' });
+    wrap.append(U.h('span', { class: 'nsel' }, selected.size + ' selected'));
+
+    const stSel = U.h('select', null, U.h('option', { value: '' }, 'status…'),
+      ...LC.vocab.STATUS.map(st => U.h('option', { value: st.key }, st.label)));
+    stSel.addEventListener('change', () => {
+      if (!stSel.value) return;
+      const key = stSel.value;
+      applyBatch(r => { r.status = key; }, 'Status set');
+    });
+    wrap.append(U.h('span', { class: 'grp' }, U.h('span', { class: 'label' }, 'Set'), stSel));
+
+    if ((S.project.events || []).length) {
+      const evSel = U.h('select', null, U.h('option', { value: '' }, 'event…'),
+        U.h('option', { value: '-' }, 'no event'),
+        ...S.project.events.map(ev => U.h('option', { value: ev.id }, ev.name || 'unnamed event')));
+      evSel.addEventListener('change', () => {
+        if (!evSel.value) return;
+        const id = evSel.value === '-' ? null : evSel.value;
+        applyBatch(r => { r.eventId = id; }, 'Event assigned');
+      });
+      wrap.append(U.h('span', { class: 'grp' }, U.h('span', { class: 'label' }, 'Assign'), evSel));
+    }
+
+    const tagIn = U.h('input', { type: 'text', placeholder: 'a tag to add…', style: { width: '150px' } });
+    const tagGo = () => {
+      const t = tagIn.value.trim();
+      if (!t) return;
+      applyBatch(r => { if (!r.tags.includes(t)) r.tags.push(t); }, 'Tag added');
+    };
+    tagIn.addEventListener('keydown', e => { if (e.key === 'Enter') tagGo(); });
+    wrap.append(U.h('span', { class: 'grp' }, tagIn, U.h('button', { class: 'act', onclick: tagGo }, 'Add tag')));
+
+    wrap.append(U.h('span', { style: { flex: '1' } }),
+      U.h('button', { class: 'act', onclick: () => { selected.clear(); renderTable(); } }, 'Clear selection'));
+    bar.append(wrap);
+  }
+
   function renderTable() {
     const host = document.getElementById('register-table');
     const rs = visible();
-    host.innerHTML = tableHTML(rs, {});
+    host.innerHTML = tableHTML(rs, { selectable: true });
     const count = document.getElementById('register-count');
     const live = S.records.filter(r => !r.struck).length;
     const shownLive = rs.filter(r => !r.struck).length;
@@ -180,8 +241,31 @@ LC.Register = (function () {
     }
 
     host.querySelectorAll('tr.entry').forEach(tr => {
-      tr.addEventListener('click', () => { location.hash = '#/entry/' + tr.dataset.id; });
+      tr.addEventListener('click', e => {
+        if (e.target.closest('.sel')) return;
+        location.hash = '#/entry/' + tr.dataset.id;
+      });
     });
+    host.querySelectorAll('input[data-sel]').forEach(box => {
+      box.addEventListener('change', () => {
+        if (box.checked) selected.add(box.dataset.sel); else selected.delete(box.dataset.sel);
+        batchline();
+        const all = document.getElementById('sel-all');
+        if (all) all.checked = rs.length > 0 && rs.every(r => selected.has(r.id));
+      });
+    });
+    const all = document.getElementById('sel-all');
+    if (all) {
+      all.checked = rs.length > 0 && rs.every(r => selected.has(r.id));
+      all.addEventListener('change', () => {
+        if (all.checked) rs.forEach(r => selected.add(r.id)); else rs.forEach(r => selected.delete(r.id));
+        renderTable();
+      });
+    }
+    /* forget selections that no longer exist (struck outright, merged away) */
+    Array.from(selected).forEach(id => { if (!LC.Model.get(id)) selected.delete(id); });
+    batchline();
+
     host.querySelectorAll('th[data-sort]').forEach(th => {
       th.addEventListener('click', () => {
         const by = th.dataset.sort;
@@ -197,6 +281,7 @@ LC.Register = (function () {
     const sheet = U.h('div', { class: 'sheet' });
     sheet.append(frontmatter(), filterline(),
       U.h('div', { class: 'countline', id: 'register-count' }),
+      U.h('div', { id: 'register-batch' }),
       U.h('div', { id: 'register-table' }));
     sect.append(sheet);
     renderTable();

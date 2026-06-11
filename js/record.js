@@ -19,6 +19,7 @@ LC.Tombstone = (function () {
       bits.push(U.esc(s));
     }
     if (e.url) bits.push('<a href="' + U.esc(e.url) + '" target="_blank" rel="noopener">' + U.esc(e.url) + '</a>');
+    if (e.archived) bits.push('<a href="' + U.esc(e.archived) + '" target="_blank" rel="noopener">archived copy</a>');
     if (e.sha256) bits.push('<span title="sha-256 ' + U.esc(e.sha256) + '">sha-256 ' + U.esc(e.sha256.slice(0, 16)) + '…</span>');
     if (e.rights) bits.push(U.esc(e.rights));
     return bits.join(' · ');
@@ -480,7 +481,7 @@ LC.Desk = (function () {
 
     const urlField = field(r, 'Or a web address', () => e.url, v => { e.url = v.trim(); }, { type: 'url', ph: 'https://…' });
     const hashBtn = U.h('button', {
-      class: 'act', style: { marginTop: '-8px', marginBottom: '14px' },
+      class: 'act',
       onclick: async () => {
         if (!e.url) return U.toast('Give a web address first');
         U.toast('Fetching to hash…');
@@ -492,7 +493,27 @@ LC.Desk = (function () {
         } catch (err) { U.toast('Could not fetch it (the source may not allow it)'); }
       },
     }, 'Fetch and hash');
-    item.append(urlField, hashBtn);
+    /* the rescue-archiving gesture: ask the Internet Archive to keep a copy */
+    const archInput = U.h('input', { type: 'url', value: e.archived || '', placeholder: 'https://web.archive.org/web/…' });
+    archInput.addEventListener('input', () => { e.archived = archInput.value.trim(); LC.App.entryChanged(r); });
+    const waybackBtn = U.h('button', {
+      class: 'act',
+      title: 'Open the Internet Archive and ask it to save this address now',
+      onclick: () => {
+        if (!e.url) return U.toast('Give a web address first');
+        window.open('https://web.archive.org/save/' + e.url, '_blank', 'noopener');
+        if (!e.archived) {
+          e.archived = 'https://web.archive.org/web/' + e.url;
+          archInput.value = e.archived;
+          LC.App.entryChanged(r, true);
+        }
+        U.toast('Snapshot requested; the archived address is kept with the evidence');
+      },
+    }, 'Request a Wayback snapshot');
+    item.append(urlField,
+      U.h('div', { style: { display: 'flex', gap: '18px', marginTop: '-8px', marginBottom: '14px', flexWrap: 'wrap' } }, hashBtn, waybackBtn),
+      U.h('div', { class: 'field' }, U.h('label', null, 'Archived address'), archInput,
+        U.h('div', { class: 'note' }, 'The Wayback address of a saved snapshot, so the evidence survives its source going dark.')));
 
     const consentSel = U.h('select', null, ...LC.vocab.CONSENT.map(c =>
       U.h('option', { value: c.key, selected: e.consent === c.key ? '' : null }, c.label + ': ' + c.gloss)));

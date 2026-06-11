@@ -92,8 +92,8 @@ LC.Exporters = (function () {
   const STATIC_JS = [
     'function show(h){',
     "  var m=/^#\\/entry\\/(.+)$/.exec(h||'');",
-    "  var view=m?'entry':(h==='#/statistics'?'statistics':(h==='#/atlas'?'atlas':(h==='#/timeline'?'timeline':'register')));",
-    "  ['register','entry','timeline','statistics','atlas'].forEach(function(v){",
+    "  var view=m?'entry':(h==='#/statistics'?'statistics':(h==='#/atlas'?'atlas':(h==='#/timeline'?'timeline':(h==='#/index'?'index':'register'))));",
+    "  ['register','entry','timeline','statistics','atlas','index'].forEach(function(v){",
     "    var s=document.getElementById('v-'+v);",
     "    if(s)s.classList.toggle('hidden',v!==view);",
     "    var b=document.querySelector('nav.folio button[data-view=\"'+v+'\"]');",
@@ -131,6 +131,7 @@ LC.Exporters = (function () {
       '<button class="view" data-view="timeline"><span class="fol">Fol. II</span>Timeline</button>' +
       '<button class="view" data-view="statistics"><span class="fol">Fol. III</span>Statistics</button>' +
       '<button class="view" data-view="atlas"><span class="fol">Fol. IV</span>Atlas</button>' +
+      '<button class="view" data-view="index"><span class="fol">Fol. V</span>Index</button>' +
       '</div></nav>';
 
     const heldBack = LC.Model.heldBackCount();
@@ -160,6 +161,8 @@ LC.Exporters = (function () {
       LC.Stats.html(pub, { publicOnly: true }) + '</div></section>';
     body += '<section class="view hidden" id="v-atlas"><div class="sheet">' +
       LC.Atlas.html(pub, { publicOnly: true }) + '</div></section>';
+    body += '<section class="view hidden" id="v-index"><div class="sheet narrow">' +
+      LC.Indexes.html(pub, { publicOnly: true }) + '</div></section>';
     body += '</main>';
 
     body += '<footer style="padding:50px 44px 60px;text-align:center">' +
@@ -178,5 +181,60 @@ LC.Exporters = (function () {
     U.toast('Finding aid saved: ' + name);
   }
 
-  return { saveProject, publicJSON, registerCSV, findingAid };
+  /* ---------- the memorial book: composed for paper ----------
+     A cover leaf from the front matter, one notice per page, and the
+     register and index as appendices. Consent applies as in every export;
+     the browser's print dialog turns it into a PDF. */
+  function printBook() {
+    const pub = LC.Model.publicClone();
+    const p = pub.project;
+    const e = U.esc;
+    if (!pub.records.length) {
+      return U.toast('Nothing is marked publish yet; the book would be empty');
+    }
+    const heldBack = LC.Model.heldBackCount();
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const kept = [p.compiler, p.institution].filter(Boolean).join(', ');
+
+    let h = '<div class="book-page"><div class="book-cover"><div class="inner">' +
+      '<div class="kind">A register of absent works</div>' +
+      '<h1>' + e(p.title || 'Untitled register') + '</h1>' +
+      (p.subtitle ? '<div class="sub">' + e(p.subtitle) + '</div>' : '') +
+      '<hr>' +
+      (kept ? '<div class="kept">kept by ' + e(kept) + '</div>' : '') +
+      (p.note ? '<div class="scope">' + e(p.note) + '</div>' : '') +
+      '<div class="foot"><div>' + pub.records.length + (pub.records.length === 1 ? ' entry' : ' entries') + ' · ' + e(today) + '</div>' +
+      (heldBack ? '<div>' + heldBack + (heldBack === 1 ? ' further entry is' : ' further entries are') + ' recorded and not published here</div>' : '') +
+      '<div>made with MIRL Lacuna · Material / Image Research Lab, UC Santa Barbara</div></div>' +
+      '</div></div></div>';
+
+    pub.records.forEach(r => {
+      h += '<div class="book-page tombstone-wrap">' +
+        LC.Tombstone.html(r, { static: true, publicOnly: true, project: p, records: pub.records }) + '</div>';
+    });
+
+    h += '<div class="book-page"><h2 class="appendix">Appendix I · The register</h2>' +
+      LC.Register.tableHTML(pub.records, { static: true }) + '</div>';
+    h += '<div class="book-page"><h2 class="appendix">Appendix II · Index</h2>' +
+      LC.Indexes.html(pub, { publicOnly: true }).replace('<h2 class="head">Index</h2>', '') + '</div>';
+
+    let book = document.getElementById('book');
+    if (!book) {
+      book = document.createElement('div');
+      book.id = 'book';
+      document.body.append(book);
+    }
+    book.innerHTML = h;
+    document.body.classList.add('book-mode');
+    const cleanup = () => {
+      document.body.classList.remove('book-mode');
+      book.innerHTML = '';
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+    U.toast('Composing the book… choose Save as PDF in the print dialog');
+    setTimeout(() => window.print(), 150);
+  }
+
+  return { saveProject, publicJSON, registerCSV, findingAid, printBook };
 })();

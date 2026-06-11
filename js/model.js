@@ -157,7 +157,7 @@ LC.Model = (function () {
     out.publish = !!r.publish;
     out.struck = !!r.struck;
     out.evidence = (Array.isArray(r.evidence) ? r.evidence : []).map(e => Object.assign({
-      id: LC.util.uid(), type: 'photograph', label: '', file: null, url: '',
+      id: LC.util.uid(), type: 'photograph', label: '', file: null, url: '', archived: '',
       sha256: '', rights: '', consent: 'restricted', until: '', note: '', thumb: '',
     }, e));
     out.copies = (Array.isArray(r.copies) ? r.copies : []).map(c => Object.assign({
@@ -299,14 +299,16 @@ LC.Store = (function () {
   function save() {
     clearTimeout(timer);
     timer = setTimeout(() => {
+      const raw = JSON.stringify(LC.Model.serialize(false));
       try {
-        localStorage.setItem(KEY, JSON.stringify(LC.Model.serialize(false)));
+        localStorage.setItem(KEY, raw);
       } catch (e) {
         if (!warned) {
           warned = true;
           LC.util.toast('Too large to autosave here. Save your project file.');
         }
       }
+      LC.Disk.write(raw);
     }, 400);
   }
   function load() {
@@ -320,6 +322,104 @@ LC.Store = (function () {
   function clear() { try { localStorage.removeItem(KEY); } catch (e) {} }
 
   return { save, load, clear };
+})();
+
+/* ---------- a live file on disk (Chromium browsers) ----------
+   With the File System Access API the project can save continuously to a
+   .json the user chooses, alongside the browser autosave, so a day's
+   cataloguing survives anything. The handle is kept in IndexedDB and
+   resumed with the user's say-so; everywhere else this stays dormant. */
+LC.Disk = (function () {
+  let handle = null;        /* active file handle */
+  let stored = null;        /* a handle found in IndexedDB, awaiting permission */
+  let busy = false, failed = false;
+
+  const supported = () => 'showSaveFilePicker' in window;
+
+  function idb() {
+    return new Promise((res, rej) => {
+      const o = indexedDB.open('mirl-lacuna', 1);
+      o.onupgradeneeded = () => o.result.createObjectStore('kv');
+      o.onsuccess = () => res(o.result);
+      o.onerror = () => rej(o.error);
+    });
+  }
+  async function kvSet(k, v) {
+    const db = await idb();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('kv', 'readwrite');
+      tx.objectStore('kv').put(v, k);
+      tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+    });
+  }
+  async function kvGet(k) {
+    const db = await idb();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('kv', 'readonly');
+      const rq = tx.objectStore('kv').get(k);
+      rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error);
+    });
+  }
+
+  /* on boot: remember a previous session's file, but write nothing
+     until the user resumes it (permission needs their gesture) */
+  async function init() {
+    if (!supported()) return;
+    try { stored = (await kvGet('fileHandle')) || null; } catch (e) { stored = null; }
+  }
+
+  function state() {
+    if (!supported()) return { mode: 'unsupported' };
+    if (handle) return { mode: 'active', name: handle.name };
+    if (stored) return { mode: 'pending', name: stored.name };
+    return { mode: 'off' };
+  }
+
+  async function connect() {
+    const name = LC.util.slug(LC.state.project.title) + '.lacuna.json';
+    handle = await window.showSaveFilePicker({
+      suggestedName: name,
+      types: [{ description: 'Lacuna project', accept: { 'application/json': ['.json'] } }],
+    });
+    stored = null; failed = false;
+    try { await kvSet('fileHandle', handle); } catch (e) {}
+    await write(JSON.stringify(LC.Model.serialize(false)), true);
+    LC.util.toast('Saving to ' + handle.name + ' as you work');
+  }
+
+  async function resume() {
+    if (!stored) return;
+    const perm = await stored.requestPermission({ mode: 'readwrite' });
+    if (perm !== 'granted') return LC.util.toast('The browser did not allow it');
+    handle = stored; stored = null; failed = false;
+    await write(JSON.stringify(LC.Model.serialize(false)), true);
+    LC.util.toast('Saving to ' + handle.name + ' as you work');
+  }
+
+  async function disconnect() {
+    const name = handle && handle.name;
+    handle = null; stored = null;
+    try { await kvSet('fileHandle', null); } catch (e) {}
+    if (name) LC.util.toast('Stopped saving to ' + name + '; the browser autosave continues');
+  }
+
+  async function write(raw, loud) {
+    if (!handle || busy) return;
+    busy = true;
+    try {
+      const w = await handle.createWritable();
+      await w.write(raw);
+      await w.close();
+      failed = false;
+    } catch (e) {
+      if (!failed) {
+        failed = true;
+        LC.util.toast('Could not write to ' + handle.name + (loud ? ': ' + (e.message || e) : '; the browser autosave continues'));
+      }
+    } finally { busy = false; }
+  }
+
+  return { supported, init, state, connect, resume, disconnect, write };
 })();
 
 /* ---------- sha-256, so evidence stays evidentially tethered ---------- */

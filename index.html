@@ -24,6 +24,7 @@
     <button class="view" data-view="timeline"><span class="fol">Fol. III</span>Timeline</button>
     <button class="view" data-view="statistics"><span class="fol">Fol. IV</span>Statistics</button>
     <button class="view" data-view="atlas"><span class="fol">Fol. V</span>Atlas</button>
+    <button class="view" data-view="index"><span class="fol">Fol. VI</span>Index</button>
   </div>
   <div class="tools">
     <button class="btn" id="new-entry-btn" title="Open a new entry in the register">New entry</button>
@@ -32,6 +33,7 @@
       <div class="menu hidden" id="project-menu">
         <button data-act="save">Save project (.json)<small>your full working file; restricted evidence stays in it</small></button>
         <button data-act="open">Open project (.json)</button>
+        <button data-act="disk" id="disk-item">Keep the file on disk<small>save continuously to a .json you choose, alongside the browser autosave</small></button>
         <hr>
         <button data-act="csv">Import entries (.csv)<small>an old inventory becomes draft entries, held back until published</small></button>
         <button data-act="merge">Merge a project (.json)<small>a colleague's register, reconciled entry by entry</small></button>
@@ -45,6 +47,7 @@
       <button class="btn" id="export-btn">Export &#9662;</button>
       <div class="menu hidden" id="export-menu">
         <button data-act="aid">Finding aid (.html)<small>one self-contained page: register, notices, atlas</small></button>
+        <button data-act="book">Print as a memorial book<small>a cover leaf, one notice per page, the register and index as appendices</small></button>
         <button data-act="csv">Register as spreadsheet (.csv)</button>
         <button data-act="json">Public data (.json)</button>
         <hr>
@@ -60,6 +63,7 @@
   <section class="view hidden" id="view-timeline"></section>
   <section class="view hidden" id="view-statistics"></section>
   <section class="view hidden" id="view-atlas"></section>
+  <section class="view hidden" id="view-index"></section>
 </main>
 
 <div class="toast" id="toast"></div>
@@ -79,6 +83,7 @@
 <script src="js/timeline.js"></script>
 <script src="js/stats.js"></script>
 <script src="js/atlas.js"></script>
+<script src="js/indexes.js"></script>
 <script src="js/importers.js"></script>
 <script src="js/exporters.js"></script>
 <script src="js/app.js"></script>

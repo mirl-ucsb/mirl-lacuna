@@ -71,6 +71,7 @@ LC.Importers = (function () {
     const fields = rows[0].map(h => HEADER_MAP[normHeader(h)] || null);
     const unmatched = rows[0].filter((h, i) => !fields[i] && String(h).trim() !== '');
     let added = 0, renumbered = 0;
+    const ids = [];
 
     rows.slice(1).forEach(cells => {
       const v = {};
@@ -103,11 +104,12 @@ LC.Importers = (function () {
       if (isFinite(lon)) r.location.lon = lon;
 
       S.records.push(r);
+      ids.push(r.id);
       added++;
     });
 
     S.project.modified = U.nowISO();
-    return { added, renumbered, unmatched };
+    return { added, renumbered, unmatched, ids };
   }
 
   /* ---------- merging a colleague's project file ---------- */
@@ -151,6 +153,35 @@ LC.Importers = (function () {
     S.project.modified = U.nowISO();
   }
 
+  /* ---------- duplicate flagging after an import or merge ----------
+     Two live entries are possible duplicates when title and creator agree
+     once case, punctuation, and diacritics are set aside. */
+  function dupKey(r) {
+    const norm = s => String(s || '').toLowerCase().normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+    const t = norm(LC.Model.title(r) === 'Untitled' ? '' : LC.Model.title(r));
+    if (!t) return null;
+    return t + '|' + norm(r.creator);
+  }
+
+  function findDuplicates(newIds) {
+    const pairs = [];
+    const fresh = S.records.filter(r => newIds.includes(r.id) && !r.struck);
+    const taken = new Set();
+    fresh.forEach(n => {
+      const k = dupKey(n);
+      if (!k) return;
+      const twin = S.records.find(o =>
+        o.id !== n.id && !o.struck && !taken.has(o.id) && dupKey(o) === k &&
+        !(newIds.includes(o.id) && newIds.indexOf(o.id) > newIds.indexOf(n.id)));
+      if (twin) {
+        taken.add(n.id); taken.add(twin.id);
+        pairs.push({ fresh: n, existing: twin });
+      }
+    });
+    return pairs;
+  }
+
   /* ---------- fixity: the evidence folder against its fingerprints ---------- */
   async function checkFiles(files) {
     const results = [];
@@ -173,5 +204,5 @@ LC.Importers = (function () {
     return results;
   }
 
-  return { parseCSV, importCSV, planMerge, applyMerge, checkFiles };
+  return { parseCSV, importCSV, planMerge, applyMerge, findDuplicates, checkFiles };
 })();

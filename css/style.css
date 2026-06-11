@@ -1,0 +1,379 @@
+/* MIRL Lacuna · a catalogue of an absent archive. No framework, no build.
+
+   Design: an inventory ledger and a memorial register, not an application.
+   The page scrolls like a bound register: ruled entry lines with column
+   rules, entry numbers set in the margin, statuses as stamped marks, and
+   each record page set as a memorial notice inside a mourning frame.
+   Loss statuses stamp in oxide red; survival in checking-pencil blue;
+   the unresolved in grey ink. Type: Spectral (the voice of the page),
+   IBM Plex Mono (the apparatus), Noto Naskh Arabic (Arabic titles),
+   all vendored locally in fonts/. Square corners throughout. */
+
+@font-face { font-family: "Spectral"; src: url("../fonts/spectral-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Spectral"; src: url("../fonts/spectral-latin-400-italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "Spectral"; src: url("../fonts/spectral-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Spectral"; src: url("../fonts/spectral-latin-600-normal.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "Plex Mono"; src: url("../fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Plex Mono"; src: url("../fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Naskh"; src: url("../fonts/noto-naskh-arabic-arabic-400-normal.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Naskh"; src: url("../fonts/noto-naskh-arabic-arabic-600-normal.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+
+:root {
+  --serif: "Spectral", "Naskh", Georgia, "Times New Roman", serif;
+  --mono: "Plex Mono", "SF Mono", Menlo, Consolas, monospace;
+  --arabic: "Naskh", "Geeza Pro", "Al Bayan", "Spectral", serif;
+  --bg: #f4efe1;          /* ledger paper */
+  --surface: #fcf9ef;     /* a lighter leaf, for menus */
+  --mat: #e9e3d0;         /* mount behind images and the atlas sea */
+  --ink: #211d12;
+  --ink-2: #5e5747;
+  --ink-3: #92896e;
+  --line: #ddd4bd;        /* hairline rule */
+  --line-2: #bfb494;      /* stronger rule */
+  --soft: #ece5d2;        /* hover wash */
+  --stamp: #8a2a17;       /* oxide stamp red: loss, marks, active states */
+  --blue: #2d4f6e;        /* checking-pencil blue: what survives */
+  --grey: #5e5747;        /* the unresolved */
+  --accent: var(--stamp);
+  --radius: 0;
+}
+
+* { box-sizing: border-box; }
+
+html { background: var(--bg); scroll-padding-top: 120px; /* room for the sticky folio line */ }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--serif); font-size: 17px; line-height: 1.55;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+
+.label { font-family: var(--mono); color: var(--ink-3); font-size: 12.5px; text-transform: uppercase; letter-spacing: .14em; }
+
+/* Arabic and other right-to-left text: naskh, with the taller leading it needs */
+[dir="rtl"], .rtl { font-family: var(--arabic); line-height: 1.9; }
+
+/* ---- the cover label: a paste-on plate, ruled beneath ---- */
+header.app { position: relative; text-align: center; padding: 34px 44px 0; }
+header.app .plate {
+  display: inline-block; border: 1px solid var(--ink); padding: 14px 34px 12px;
+  background: var(--bg);
+}
+header.app h1 { font-size: 27px; margin: 0; font-weight: 600; letter-spacing: .02em; line-height: 1.1; }
+header.app .tag { display: block; margin-top: 2px; font-style: italic; color: var(--ink-2); font-size: 16.5px; }
+header.app a.lab {
+  position: absolute; right: 44px; top: 44px;
+  font-family: var(--mono); color: var(--ink-3); text-decoration: none;
+  font-size: 12px; text-transform: uppercase; letter-spacing: .14em;
+}
+header.app a.lab:hover { color: var(--stamp); }
+
+/* ---- the folio line: sections of the register, not app tabs ---- */
+nav.folio {
+  position: sticky; top: 0; z-index: 40;
+  display: flex; align-items: baseline; gap: 30px; flex-wrap: wrap;
+  padding: 20px 44px 0; background: var(--bg);
+  border-bottom: 3px double var(--line-2); margin-top: 22px;
+}
+nav.folio .views { display: flex; gap: 30px; flex-wrap: wrap; }
+nav.folio button.view {
+  border: 0; background: none; padding: 2px 1px 14px; cursor: pointer;
+  font-family: var(--mono); font-size: 13px; text-transform: uppercase; letter-spacing: .12em;
+  color: var(--ink-2);
+}
+nav.folio button.view .fol { color: var(--ink-3); margin-right: 9px; font-size: 12px; }
+nav.folio button.view:hover:not(:disabled) { color: var(--ink); }
+nav.folio button.view.on { color: var(--ink); box-shadow: inset 0 -2px 0 var(--stamp); }
+nav.folio button.view.on .fol { color: var(--stamp); }
+nav.folio button.view:disabled { opacity: .4; cursor: default; }
+nav.folio .tools { margin-left: auto; display: flex; gap: 14px; align-items: center; padding-bottom: 10px; }
+
+/* buttons read as stamped labels */
+button.btn {
+  font-family: var(--mono); font-size: 13px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--ink); border: 1px solid var(--ink); padding: 8px 15px; background: transparent; cursor: pointer;
+}
+button.btn:hover:not(:disabled) { background: var(--ink); color: var(--bg); }
+button.btn:disabled { opacity: .4; cursor: default; }
+button.btn.quiet { border-color: transparent; color: var(--ink-2); padding: 8px 6px; }
+button.btn.quiet:hover:not(:disabled) { background: transparent; color: var(--stamp); }
+button.btn.danger { color: var(--stamp); border-color: var(--stamp); }
+button.btn.danger:hover:not(:disabled) { background: var(--stamp); color: var(--bg); }
+
+/* text-sized actions inside entries */
+button.act {
+  border: 0; background: none; cursor: pointer; padding: 0;
+  font-family: var(--mono); font-size: 12.5px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-3);
+}
+button.act:hover { color: var(--stamp); }
+
+select, input[type="text"], input[type="url"], input[type="number"], input[type="date"], textarea {
+  font-family: var(--serif); font-size: 16.5px; color: var(--ink);
+  background: transparent; border: 0; border-bottom: 1px solid var(--line-2);
+  border-radius: 0; padding: 5px 2px; max-width: 100%;
+}
+select:focus, input:focus, textarea:focus { outline: none; border-bottom: 1.5px solid var(--stamp); }
+input::placeholder, textarea::placeholder { color: var(--ink-3); font-style: italic; }
+textarea { width: 100%; resize: vertical; line-height: 1.6; }
+label.inline { display: inline-flex; align-items: center; gap: 9px; font-size: 15.5px; color: var(--ink-2); }
+input[type="checkbox"] { accent-color: var(--stamp); width: 16px; height: 16px; }
+
+.menu-wrap { position: relative; }
+.menu {
+  position: absolute; right: 0; top: calc(100% + 10px); z-index: 60;
+  background: var(--surface); border: 1px solid var(--ink);
+  min-width: 300px; padding: 8px;
+  box-shadow: 5px 5px 0 rgba(33, 29, 18, .12);
+}
+.menu.hidden { display: none; }
+.menu button {
+  display: block; width: 100%; text-align: left; background: transparent; border: 0;
+  color: var(--ink); padding: 11px 12px; font-family: var(--serif); font-size: 16px; cursor: pointer;
+}
+.menu button:hover { background: var(--soft); color: var(--stamp); }
+.menu button small { display: block; font-size: 13.5px; color: var(--ink-3); font-style: italic; }
+.menu button:hover small { color: var(--stamp); }
+.menu hr { border: 0; border-top: 1px solid var(--line); margin: 6px 2px; }
+
+/* ---- the page body ---- */
+main { display: block; padding: 0 44px 90px; }
+.sheet { max-width: 1180px; margin: 0 auto; }
+.sheet.narrow { max-width: 860px; }
+section.view.hidden { display: none; }
+
+h2.head {
+  font-size: 24px; font-weight: 600; margin: 44px 0 6px; letter-spacing: .005em;
+}
+.subhead { color: var(--ink-2); font-style: italic; font-size: 16.5px; margin: 0 0 26px; }
+.hint { color: var(--ink-2); font-size: 15.5px; line-height: 1.7; }
+.hint b, .hint strong { color: var(--ink); font-weight: 600; }
+.hint code { font-family: var(--mono); font-size: 13.5px; background: var(--soft); padding: 1px 5px; color: var(--ink); }
+
+/* ---- stamped status marks ---- */
+.mark {
+  display: inline-block; font-family: var(--mono); font-size: 12.5px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: .13em; line-height: 1;
+  padding: 5px 9px 4px; border: 1.2px solid currentColor; white-space: nowrap;
+}
+.st-destroyed, .st-looted, .st-damaged { color: var(--stamp); }
+.st-dispersed, .st-unlocated { color: var(--grey); }
+.st-copy, .st-fragment { color: var(--blue); }
+
+/* interactive stamps (filters, the status chooser) */
+button.mark { background: transparent; cursor: pointer; }
+button.mark:hover { background: var(--soft); }
+button.mark.on.st-destroyed, button.mark.on.st-looted, button.mark.on.st-damaged { background: var(--stamp); color: var(--bg); border-color: var(--stamp); }
+button.mark.on.st-dispersed, button.mark.on.st-unlocated { background: var(--grey); color: var(--bg); border-color: var(--grey); }
+button.mark.on.st-copy, button.mark.on.st-fragment { background: var(--blue); color: var(--bg); border-color: var(--blue); }
+
+/* certainty: a filled, half, or open point */
+.cert { font-style: italic; color: var(--ink-2); white-space: nowrap; }
+.cert .pt { font-style: normal; font-family: var(--mono); color: var(--ink-3); margin-right: 4px; }
+
+/* ---- front matter (the project block) ---- */
+.frontmatter { margin: 40px 0 8px; }
+.frontmatter .fm-title { font-size: 31px; font-weight: 600; line-height: 1.2; margin: 0; }
+.frontmatter .fm-sub { font-style: italic; color: var(--ink-2); font-size: 17.5px; margin: 4px 0 0; }
+.frontmatter .fm-line { font-family: var(--mono); font-size: 12.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); margin-top: 12px; }
+.frontmatter details { margin-top: 14px; }
+.frontmatter summary {
+  cursor: pointer; list-style: none; display: inline-block;
+  font-family: var(--mono); font-size: 12.5px; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-3);
+}
+.frontmatter summary::-webkit-details-marker { display: none; }
+.frontmatter summary::before { content: "+ "; color: var(--stamp); }
+.frontmatter details[open] summary::before { content: "− "; }
+.frontmatter summary:hover { color: var(--stamp); }
+.frontmatter .fm-form { padding: 18px 0 6px; border-bottom: 1px solid var(--line); max-width: 760px; }
+
+/* ---- the register ---- */
+.filterline {
+  display: flex; align-items: baseline; gap: 22px; flex-wrap: wrap;
+  margin: 26px 0 0; padding-bottom: 16px;
+}
+.filterline input[type="text"] { width: 300px; font-size: 16px; }
+.filterline .marks { display: flex; gap: 8px; flex-wrap: wrap; }
+.filterline button.mark { font-size: 11.5px; padding: 4px 7px 3px; }
+.countline { font-family: var(--mono); font-size: 12.5px; letter-spacing: .08em; color: var(--ink-3); text-transform: uppercase; margin: 6px 0 14px; }
+
+table.register { width: 100%; border-collapse: collapse; border-top: 3px double var(--line-2); }
+table.register th {
+  font-family: var(--mono); font-size: 12px; font-weight: 400; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-3); text-align: left; padding: 12px 14px 10px; border-bottom: 1px solid var(--line-2);
+  white-space: nowrap; cursor: pointer; user-select: none;
+}
+table.register th:hover { color: var(--ink); }
+table.register th .dir { color: var(--stamp); margin-left: 5px; }
+table.register td {
+  padding: 13px 14px 14px; border-bottom: 1px solid var(--line); vertical-align: baseline;
+  font-size: 16px; color: var(--ink-2);
+}
+table.register th + th, table.register td + td { border-left: 1px solid var(--line); }
+table.register tr.entry { cursor: pointer; }
+table.register tr.entry:hover td { background: var(--soft); }
+table.register td.no { font-family: var(--mono); font-size: 12.5px; color: var(--stamp); white-space: nowrap; letter-spacing: .05em; }
+table.register td.title { color: var(--ink); font-size: 17px; }
+table.register td.title .t { font-weight: 500; }
+table.register td.title .t2 { color: var(--ink-2); font-size: 16px; display: inline-block; margin-left: 10px; }
+table.register td.title .by { display: block; font-style: italic; color: var(--ink-2); font-size: 15px; margin-top: 1px; }
+table.register td.mono { font-family: var(--mono); font-size: 13px; color: var(--ink-2); }
+table.register td .mark { font-size: 11.5px; padding: 4px 7px 3px; }
+.register-empty { border-bottom: 1px solid var(--line); padding: 56px 20px; text-align: center; color: var(--ink-2); font-style: italic; }
+.register-empty .actions { margin-top: 18px; display: flex; gap: 12px; justify-content: center; }
+
+/* ---- the record page: a memorial notice in a mourning frame ---- */
+.tombstone-wrap { margin: 44px auto 0; max-width: 800px; }
+.tombstone {
+  border: 1.5px solid var(--ink); padding: 5px; background: var(--bg);
+}
+.tombstone .inner { border: 1px solid var(--line-2); padding: 44px 56px 40px; }
+.tombstone .ts-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 26px; }
+.tombstone .ts-no { font-family: var(--mono); font-size: 12.5px; letter-spacing: .14em; color: var(--ink-3); text-transform: uppercase; padding-top: 6px; }
+.tombstone .ts-stamp .mark { transform: rotate(-1.4deg); font-size: 13.5px; padding: 7px 12px 6px; }
+.tombstone h2.ts-title { font-size: 30px; font-weight: 600; text-align: center; margin: 0 0 2px; line-height: 1.25; }
+.tombstone .ts-title-alt { text-align: center; font-size: 24px; color: var(--ink); margin: 6px 0 0; }
+.tombstone .ts-vital { text-align: center; font-style: italic; color: var(--ink-2); font-size: 17px; margin: 14px 0 0; }
+.tombstone .ts-rule { border: 0; border-top: 1px solid var(--line-2); width: 88px; margin: 26px auto; }
+.tombstone .ts-fields { max-width: 560px; margin: 0 auto; }
+.tombstone .ts-row { display: flex; gap: 18px; padding: 7px 0; }
+.tombstone .ts-row dt { flex: 0 0 168px; font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); padding-top: 4px; }
+.tombstone .ts-row dd { margin: 0; flex: 1; font-size: 16.5px; color: var(--ink); }
+.tombstone .ts-row dd .cert { font-size: 15.5px; }
+.tombstone .ts-note { max-width: 600px; margin: 26px auto 0; font-size: 17.5px; line-height: 1.75; }
+.tombstone .ts-note p { margin: 0 0 14px; }
+.tombstone .ts-tags { text-align: center; margin-top: 22px; font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+.tombstone .ts-sect { margin-top: 34px; }
+.tombstone .ts-sect h3 {
+  font-family: var(--mono); font-size: 12.5px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink); margin: 0 0 4px; padding-bottom: 8px; border-bottom: 3px double var(--line-2);
+}
+.tombstone .ts-sect .none { font-style: italic; color: var(--ink-3); font-size: 15.5px; padding: 10px 0 0; }
+
+/* evidence and copies, ruled like sub-ledgers */
+.ev-table { width: 100%; border-collapse: collapse; }
+.ev-table td { padding: 11px 12px 12px 0; border-bottom: 1px solid var(--line); font-size: 15.5px; color: var(--ink-2); vertical-align: top; }
+.ev-table td.n { width: 30px; font-family: var(--mono); font-size: 12.5px; color: var(--stamp); padding-top: 14px; }
+.ev-table td.kind { width: 120px; font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); padding-top: 14px; }
+.ev-table .ev-label { color: var(--ink); font-size: 16px; }
+.ev-table .ev-meta { font-family: var(--mono); font-size: 12px; color: var(--ink-3); margin-top: 4px; word-break: break-all; }
+.ev-table .ev-meta a { color: var(--ink-3); }
+.ev-table .ev-meta a:hover { color: var(--stamp); }
+.ev-table .ev-note { font-style: italic; font-size: 15px; margin-top: 3px; }
+.ev-table img.ev-thumb { display: block; max-width: 132px; max-height: 96px; border: 1px solid var(--line-2); background: var(--mat); padding: 3px; margin-top: 8px; }
+.consent { font-family: var(--mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+.consent.public { color: var(--blue); }
+.consent.restricted, .consent.embargoed { color: var(--stamp); }
+
+/* the IIIF look at a surviving copy */
+.copy-viewer { position: relative; height: 440px; margin: 14px 0 6px; border: 1px solid var(--line-2); background: var(--mat); }
+.copy-viewer .osd { position: absolute !important; inset: 0 !important; }
+.copy-viewer .closer { position: absolute; top: 10px; right: 10px; z-index: 5; background: var(--bg); }
+
+/* the footnote citation */
+.cite-block { margin-top: 34px; }
+.cite-out {
+  border-top: 1px solid var(--line-2); border-bottom: 1px solid var(--line-2);
+  padding: 16px 2px; font-size: 16.5px; line-height: 1.7; color: var(--ink);
+  white-space: pre-wrap; word-break: break-word;
+  padding-left: 1.4em; text-indent: -1.4em;
+}
+.cite-row { display: flex; gap: 18px; align-items: baseline; margin-bottom: 10px; }
+
+/* ---- the cataloguer's desk (the editing form) ---- */
+.desk { max-width: 800px; margin: 40px auto 0; }
+.desk-head { display: flex; align-items: baseline; gap: 16px; border-bottom: 3px double var(--line-2); padding-bottom: 10px; }
+.desk-head h3 { font-size: 20px; font-weight: 600; margin: 0; }
+.desk-head .hint { font-style: italic; }
+.desk-sect { padding: 24px 0 10px; border-bottom: 1px solid var(--line); }
+.desk-sect:last-child { border-bottom: 0; }
+.desk-sect > h4 {
+  margin: 0 0 16px; font-family: var(--mono); font-size: 12.5px; font-weight: 500;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--ink);
+}
+.desk-sect > h4 small { color: var(--ink-3); text-transform: none; letter-spacing: .04em; font-weight: 400; margin-left: 10px; font-size: 12px; }
+.field { margin-bottom: 16px; }
+.field > label { display: block; font-family: var(--mono); font-size: 12.5px; color: var(--ink-3); margin-bottom: 3px; text-transform: uppercase; letter-spacing: .12em; }
+.field input, .field select, .field textarea { width: 100%; }
+.field .note { font-size: 14.5px; color: var(--ink-3); font-style: italic; margin-top: 5px; line-height: 1.5; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+.marks-pick { display: flex; gap: 9px; flex-wrap: wrap; }
+
+/* repeating items (titles, evidence, copies) ruled apart, never boxed */
+.item { padding: 16px 0; border-bottom: 1px solid var(--line); }
+.item:first-child { border-top: 1px solid var(--line); }
+.item .item-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+.item .item-head .n { font-family: var(--mono); font-size: 12.5px; color: var(--stamp); }
+.item .item-head .sp { flex: 1; }
+.add-line { padding: 14px 0 6px; }
+
+/* ---- statistics: the reckoning ---- */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0; border-top: 3px double var(--line-2); border-bottom: 1px solid var(--line); margin-top: 30px; }
+.stat-cell { padding: 22px 18px 24px; border-left: 1px solid var(--line); }
+.stat-cell:first-child { border-left: 0; }
+.stat-cell .big { font-family: var(--mono); font-size: 38px; font-weight: 500; line-height: 1; }
+.stat-cell .what { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); margin-top: 9px; }
+table.tally { width: 100%; border-collapse: collapse; margin-top: 8px; }
+table.tally td { padding: 13px 14px 13px 0; border-bottom: 1px solid var(--line); vertical-align: middle; }
+table.tally td.k { width: 220px; }
+table.tally td.n { width: 70px; font-family: var(--mono); font-size: 17px; font-weight: 500; text-align: right; color: var(--ink); }
+table.tally td.bar svg { display: block; }
+.stats-note { font-style: italic; color: var(--ink-2); margin-top: 18px; font-size: 15.5px; }
+
+/* ---- the atlas ---- */
+.atlas-plate { border: 1.5px solid var(--ink); padding: 5px; margin-top: 30px; background: var(--bg); }
+.atlas-plate .inner { border: 1px solid var(--line-2); background: var(--bg); position: relative; }
+.atlas-plate svg { display: block; width: 100%; height: auto; }
+.atlas-plate .coast { fill: var(--soft); stroke: var(--ink-2); stroke-width: .45; }
+.atlas-plate .grat { stroke: var(--line); stroke-width: .5; fill: none; }
+.atlas-plate .frame { stroke: var(--line-2); stroke-width: 1; fill: none; }
+.atlas-plate .site { cursor: pointer; }
+.atlas-plate .pt { fill: none; stroke: var(--stamp); stroke-width: 1.4; }
+.atlas-plate .pt-core { fill: var(--stamp); }
+.atlas-plate .ptlab { font-family: var(--mono); font-size: 10.5px; letter-spacing: .04em; fill: var(--stamp); }
+.atlas-plate .site:hover .pt { stroke-width: 2.2; }
+.atlas-caption { text-align: center; font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); padding: 12px 10px 10px; border-top: 1px solid var(--line-2); margin-top: 5px; }
+table.gazetteer { width: 100%; border-collapse: collapse; margin-top: 26px; border-top: 3px double var(--line-2); }
+table.gazetteer th { font-family: var(--mono); font-size: 12px; font-weight: 400; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); text-align: left; padding: 11px 14px 9px; border-bottom: 1px solid var(--line-2); }
+table.gazetteer td { padding: 11px 14px; border-bottom: 1px solid var(--line); font-size: 16px; color: var(--ink-2); }
+table.gazetteer th + th, table.gazetteer td + td { border-left: 1px solid var(--line); }
+table.gazetteer td.no { font-family: var(--mono); font-size: 12.5px; color: var(--stamp); }
+table.gazetteer td.coords { font-family: var(--mono); font-size: 13px; }
+table.gazetteer tr.row { cursor: pointer; }
+table.gazetteer tr.row:hover td { background: var(--soft); }
+
+/* ---- toast ---- */
+.toast {
+  position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%);
+  background: var(--surface); color: var(--ink); border: 1px solid var(--ink);
+  padding: 12px 20px; font-family: var(--mono); font-size: 13px; text-transform: uppercase; letter-spacing: .08em;
+  z-index: 200; box-shadow: 4px 4px 0 rgba(33, 29, 18, .15);
+  opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; max-width: 80vw;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+
+.sr { position: absolute; left: -9999px; }
+
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-thumb { background: var(--line-2); border: 3px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-3); }
+
+@media (max-width: 860px) {
+  main { padding: 0 20px 70px; }
+  header.app { padding: 26px 20px 0; }
+  header.app a.lab { display: none; }
+  nav.folio { position: static; padding: 16px 20px 0; gap: 18px; }
+  .tombstone .inner { padding: 28px 22px 26px; }
+  .row2, .row3 { grid-template-columns: 1fr; }
+  .tombstone .ts-row { flex-direction: column; gap: 2px; }
+}
+
+/* ---- print: the register and the notice, nothing else ---- */
+@media print {
+  nav.folio, .filterline, .desk, .toast, button, .menu, .frontmatter details { display: none !important; }
+  body { background: #fff; font-size: 12pt; }
+  main { padding: 0; }
+  .tombstone-wrap, .sheet { max-width: none; margin: 0; }
+  section.view.hidden { display: none !important; }
+  table.register td, table.register th { padding: 7px 9px; }
+  a { color: inherit; text-decoration: none; }
+}

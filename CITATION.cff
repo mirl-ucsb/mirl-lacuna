@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use this software in your research or teaching, please cite it as below."
+type: software
+title: "MIRL Lacuna: a catalogue of an absent archive"
+abstract: >-
+  A no-build, local-first cataloguer for archives that no longer exist:
+  destroyed, damaged, looted, dispersed, and unlocated works recorded with
+  evidence hashes, consent states, surviving copies (IIIF), a memorial
+  register view, statistics, an atlas of safe-to-publish places, and a
+  self-contained finding-aid export. Arabic and right-to-left ready.
+authors:
+  - family-names: "O'Brien"
+    given-names: "Jeff"
+    email: "jeffobrien@ucsb.edu"
+    affiliation: >-
+      Material / Image Research Lab, Department of History of Art &
+      Architecture, University of California, Santa Barbara
+version: "1.0.0"
+date-released: "2026-06-10"
+license: MIT
+repository-code: "https://github.com/mirl-ucsb/mirl-lacuna"
+url: "https://mirl-ucsb.github.io/mirl-lacuna/"
+keywords:
+  - art history
+  - digital humanities
+  - cultural heritage
+  - destroyed archives
+  - provenance
+  - lost art
+  - IIIF
+  - data sovereignty
+  - minimal computing

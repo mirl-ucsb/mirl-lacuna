@@ -33,7 +33,7 @@ LC.Indexes = (function () {
     } else {
       terms.forEach(t => {
         const refs = map.get(t).map(id =>
-          '<span class="ix-ref" data-id="' + U.esc(id) + '">' + U.esc(id.replace(/^LAC-0*/, '')) + '</span>').join(', ');
+          '<a class="ix-ref" href="#/entry/' + U.esc(id) + '" data-id="' + U.esc(id) + '">' + U.esc(id.replace(/^[A-Z]+-0*/, '')) + '</a>').join(', ');
         h += '<div class="ix-line"><span class="ix-term"' + (U.isRTL(t) ? ' dir="rtl"' : '') + '>' + U.esc(t) + '</span>' +
           '<span class="dots"></span><span class="ix-refs">' + refs + '</span></div>';
       });

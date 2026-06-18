@@ -5,6 +5,22 @@ nothing erased, each change dated and explained. Versions follow
 [semantic versioning](https://semver.org); project files from any earlier
 version load cleanly in any later one.
 
+## 1.5.1 (2026-06-18)
+
+- **Accessibility and keyboard pass.** A visible focus ring for keyboard users
+  throughout, a skip link to the register, entry numbers are real links so the
+  register, atlas gazetteer, and index can be navigated by keyboard, form
+  labels are tied to their fields for screen readers, the dialogs (unlock,
+  merge, sources, duplicates, fixity) are proper modals that trap focus, close
+  on Escape, and return focus, the menus carry their open state and return
+  focus on Escape, the folio nav marks the current page, and the status,
+  certainty, and place-publication stamps announce their pressed state.
+- **Duplicate this entry.** A new action on the desk makes a held-back copy of
+  an entry's descriptive fields (titles, creator, date, medium, collection,
+  status, event, place, tags, note) for cataloguing many similar items, while
+  leaving the evidence, surviving copies, sightings, status history, and
+  investigation log empty, so nothing source-specific or restricted is cloned.
+
 ## 1.5.0 (2026-06-17)
 
 - **Type a place, see it on the atlas, no coordinates by hand.** A bundled

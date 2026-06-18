@@ -41,6 +41,18 @@ LC.util = {
   /* does a string begin in a right-to-left script (Arabic, Hebrew, Syriac)? */
   isRTL(s) { return /^[\s"'(\[]*[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/.test(String(s || '')); },
   uid() { return 'x' + Math.random().toString(36).slice(2, 9); },
+  /* give every label in a freshly rendered scope a real for/id link to its
+     control, so screen readers announce the field; runs over .field blocks */
+  associateLabels(scope) {
+    (scope || document).querySelectorAll('.field').forEach(f => {
+      const label = f.querySelector(':scope > label');
+      if (!label || label.htmlFor) return;
+      const ctl = f.querySelector('input, select, textarea');
+      if (!ctl) return;
+      if (!ctl.id) ctl.id = 'fld-' + this.uid();
+      label.htmlFor = ctl.id;
+    });
+  },
 };
 
 /* ---------- controlled vocabularies ---------- */
@@ -215,6 +227,28 @@ LC.Model = (function () {
     S.project.modified = LC.util.nowISO();
   }
 
+  /* a new entry copying the descriptive template of another, for cataloguing
+     many similar items (the glass-plate cabinet, plate after plate). The
+     item-specific record is deliberately NOT carried: evidence, surviving
+     copies, sightings, status history, the investigation log, and relations
+     start empty, so no source file or testimony is silently cloned onto a new
+     entry, and the duplicate begins held back from publication. */
+  function duplicate(id) {
+    const src = get(id);
+    if (!src) return null;
+    const r = newRecord();
+    r.titles = JSON.parse(JSON.stringify(src.titles || [{ text: '', lang: '' }]));
+    r.creator = src.creator; r.date = src.date; r.medium = src.medium; r.origin = src.origin;
+    r.status = src.status; r.certainty = src.certainty; r.eventId = src.eventId;
+    r.tags = (src.tags || []).slice();
+    r.note = src.note;
+    r.lastSeen = Object.assign({}, src.lastSeen);
+    r.location = Object.assign({}, src.location);
+    S.records.push(r);
+    touch(r);
+    return r;
+  }
+
   function touch(r) {
     if (r) r.modified = LC.util.nowISO();
     S.project.modified = LC.util.nowISO();
@@ -386,7 +420,7 @@ LC.Model = (function () {
     S.records = [];
   }
 
-  return { newRecord, normalize, nextId, get, add, remove, touch, title, altTitles,
+  return { newRecord, normalize, nextId, get, add, remove, duplicate, touch, title, altTitles,
     serialize, publicClone, heldBackCount, lapsedEmbargoes, setStatus,
     sourceOf, addSource, removeSource, restsOn, restrictSource,
     eventOf, addEvent, removeEvent, loadData, reset };

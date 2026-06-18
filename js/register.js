@@ -34,7 +34,7 @@ LC.Register = (function () {
       : '';
     return '<tr class="entry' + (r.struck ? ' struck' : '') + '" data-id="' + U.esc(r.id) + '">' +
       selCell +
-      '<td class="no">' + U.esc(r.id) + flag + '</td>' +
+      '<td class="no"><a class="entry-link" href="#/entry/' + U.esc(r.id) + '">' + U.esc(r.id) + '</a>' + flag + '</td>' +
       '<td class="title">' + titleCell + '</td>' +
       '<td class="mono">' + U.esc(r.date) + '</td>' +
       '<td>' + U.esc(r.medium) + '</td>' +
@@ -149,6 +149,7 @@ LC.Register = (function () {
       const b = U.h('button', {
         class: 'mark ' + st.cls + (S.filters.statuses.includes(st.key) ? ' on' : ''),
         title: 'Show only ' + st.label.toLowerCase() + ' entries',
+        'aria-pressed': String(S.filters.statuses.includes(st.key)),
         onclick: () => {
           const i = S.filters.statuses.indexOf(st.key);
           if (i >= 0) S.filters.statuses.splice(i, 1); else S.filters.statuses.push(st.key);
@@ -264,7 +265,7 @@ LC.Register = (function () {
 
     host.querySelectorAll('tr.entry').forEach(tr => {
       tr.addEventListener('click', e => {
-        if (e.target.closest('.sel')) return;
+        if (e.target.closest('.sel') || e.target.closest('a')) return;
         location.hash = '#/entry/' + tr.dataset.id;
       });
     });

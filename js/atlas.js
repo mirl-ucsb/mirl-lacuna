@@ -91,7 +91,7 @@ LC.Atlas = (function () {
         }
         const reason = !opts.publicOnly && !pub ? '<div class="gaz-state">' + heldReason(r) + '</div>' : '';
         h += '<tr class="row' + (pub ? '' : ' preview') + '" data-id="' + U.esc(r.id) + '">' +
-          '<td class="no">' + U.esc(r.id) + '</td>' +
+          '<td class="no"><a class="entry-link" href="#/entry/' + U.esc(r.id) + '">' + U.esc(r.id) + '</a></td>' +
           '<td>' + U.esc(LC.Model.title(r)) + '</td>' +
           '<td>' + U.esc(loc.place || '') + '</td>' +
           '<td class="coords">' + coords + reason + '</td>' +

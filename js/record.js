@@ -448,23 +448,23 @@ LC.Desk = (function () {
       histBox.append(wrap);
     };
 
-    const statusPick = U.h('div', { class: 'marks-pick' });
+    const statusPick = U.h('div', { class: 'marks-pick', role: 'group', 'aria-label': 'Status' });
     LC.vocab.STATUS.forEach(st => {
-      const b = U.h('button', { class: 'mark ' + st.cls + (r.status === st.key ? ' on' : '') }, st.label);
+      const b = U.h('button', { class: 'mark ' + st.cls + (r.status === st.key ? ' on' : ''), 'aria-pressed': String(r.status === st.key) }, st.label);
       b.addEventListener('click', () => {
         if (r.status !== st.key) LC.Model.setStatus(r, st.key);
-        statusPick.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+        statusPick.querySelectorAll('button').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); });
         drawHistory();
         LC.App.entryChanged(r, true);
       });
       statusPick.append(b);
     });
-    const certPick = U.h('div', { class: 'marks-pick', style: { marginTop: '14px' } });
+    const certPick = U.h('div', { class: 'marks-pick', style: { marginTop: '14px' }, role: 'group', 'aria-label': 'Certainty' });
     LC.vocab.CERTAINTY.forEach(c => {
-      const b = U.h('button', { class: 'mark st-unlocated' + (r.certainty === c.key ? ' on' : '') }, c.pt + ' ' + c.label);
+      const b = U.h('button', { class: 'mark st-unlocated' + (r.certainty === c.key ? ' on' : ''), 'aria-pressed': String(r.certainty === c.key) }, c.pt + ' ' + c.label);
       b.addEventListener('click', () => {
         r.certainty = c.key;
-        certPick.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+        certPick.querySelectorAll('button').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); });
         LC.App.entryChanged(r, true);
       });
       certPick.append(b);
@@ -801,6 +801,22 @@ LC.Desk = (function () {
       }, '+ Add a relation')));
   }
 
+  /* ----- duplicate: a template for the next of many similar items ----- */
+  function dupSect(r) {
+    return sect('Duplicate', null,
+      U.h('button', {
+        class: 'btn', onclick: () => {
+          const n = LC.Model.duplicate(r.id);
+          if (!n) return;
+          LC.Store.save();
+          U.toast('Duplicated as ' + n.id + ', held back from publication');
+          location.hash = '#/entry/' + n.id;
+        },
+      }, 'Duplicate this entry'),
+      U.h('div', { class: 'note', style: { marginTop: '10px' } },
+        'Makes a new held-back entry with this one’s descriptive fields (titles, creator, date, medium, collection, status, event, place, tags, note). The evidence, surviving copies, sightings, status history, and investigation log are left empty, so nothing source-specific or restricted is carried; attach those for the new item.'));
+  }
+
   /* ----- striking out: a ledger cancels, it does not erase ----- */
   function strikeSect(r) {
     if (!r.struck) {
@@ -875,12 +891,12 @@ LC.Desk = (function () {
     desk.append(sightingsSect(r));
 
     const loc = r.location;
-    const locPick = U.h('div', { class: 'marks-pick' });
+    const locPick = U.h('div', { class: 'marks-pick', role: 'group', 'aria-label': 'Publication of this place' });
     LC.vocab.LOCPUB.forEach(lp => {
-      const b = U.h('button', { class: 'mark st-unlocated' + (loc.publish === lp.key ? ' on' : ''), title: lp.gloss, 'data-pub': lp.key }, lp.label);
+      const b = U.h('button', { class: 'mark st-unlocated' + (loc.publish === lp.key ? ' on' : ''), title: lp.gloss, 'data-pub': lp.key, 'aria-pressed': String(loc.publish === lp.key) }, lp.label);
       b.addEventListener('click', () => {
         loc.publish = lp.key;
-        locPick.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+        locPick.querySelectorAll('button').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); });
         LC.App.entryChanged(r, true);
       });
       locPick.append(b);
@@ -991,6 +1007,7 @@ LC.Desk = (function () {
     desk.append(relationsSect(r));
     desk.append(logSect(r));
 
+    desk.append(dupSect(r));
     desk.append(strikeSect(r));
 
     return desk;

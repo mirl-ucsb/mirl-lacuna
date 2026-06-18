@@ -66,6 +66,11 @@ surviving copies. It is a tombstone, not a 404. Below the notice sits **the
 cataloguer's desk**, the working form; everything you type appears in the
 notice above as you type it.
 
+When you are cataloguing many similar items (the plates of one cabinet, the
+volumes of one run), **Duplicate this entry** on the desk makes a held-back
+copy of the descriptive fields, leaving the evidence, sightings, and history
+empty for the new item.
+
 Entries are **struck, not deleted**. A real ledger never erases; it cancels
 visibly. A struck entry stays in the register as a cancelled line, ruled
 through, kept out of every export, restorable at any time, and its number is
@@ -451,6 +456,9 @@ To regenerate the sample, run `python3 samples/make-samples.py` (needs
   then comma-separated segments last first, treating a trailing country name
   as the country slot rather than a same-named town. The optional online
   lookup uses OpenStreetMap's Nominatim, only on an explicit press.
+- **Accessibility.** The interface is operable by keyboard throughout, with a
+  visible focus ring, a skip link, entry numbers as real links, labelled form
+  fields, and dialogs that trap focus and close on Escape.
 - **No data leaves your machine.** Everything runs in the browser. The only
   network requests Lacuna ever makes are the ones you ask for: opening a
   IIIF copy, fetching a URL to hash it, asking the Internet Archive to save
@@ -496,7 +504,7 @@ you a reference in APA or BibTeX form. Every release is archived on
 note, cite it as:
 
 > Jeff O'Brien, *MIRL Lacuna: a catalogue of an absent archive*, version
-> 1.5.0, Material / Image Research Lab, UC Santa Barbara, 2026,
+> 1.5.1, Material / Image Research Lab, UC Santa Barbara, 2026,
 > https://doi.org/10.5281/zenodo.20651020.
 
 ---

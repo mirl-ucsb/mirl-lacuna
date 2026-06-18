@@ -580,11 +580,9 @@ LC.App = (function () {
   function boot() {
     const loaded = LC.Store.load();
     if (loaded === false) {
-      if (window.LC.SAMPLE) {
-        try { LC.Model.loadData(JSON.parse(JSON.stringify(LC.SAMPLE))); } catch (e) { LC.Model.reset(); }
-      } else {
-        LC.Model.reset();
-      }
+      /* first visit opens to a blank register, not the sample; the empty
+         state and the Project menu both offer to open the sample register */
+      LC.Model.reset();
     } else if (loaded !== true) {
       /* a locked register waits in the autosave: ask before showing anything */
       setTimeout(() => unlockOverlay(loaded, raw => {

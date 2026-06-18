@@ -254,10 +254,13 @@ LC.Register = (function () {
     if (emptyCell) {
       if (!S.records.length) {
         emptyCell.append(
-          'The register is empty. Every entry holds a place for something that is gone.',
+          U.h('div', { style: { fontSize: '17px', color: 'var(--ink)' } },
+            'This register is empty. Every entry holds a place for something that is gone.'),
           U.h('div', { class: 'actions' },
-            U.h('button', { class: 'btn', onclick: () => LC.App.newEntry() }, 'Begin the first entry'),
-            LC.SAMPLE ? U.h('button', { class: 'btn', onclick: () => LC.App.loadSample() }, 'Open the sample register') : null));
+            LC.SAMPLE ? U.h('button', { class: 'btn primary', onclick: () => LC.App.loadSample() }, 'Open the sample register') : null,
+            U.h('button', { class: 'btn', onclick: () => LC.App.newEntry() }, 'Begin a new entry')),
+          LC.SAMPLE ? U.h('div', { class: 'hint', style: { marginTop: '16px', fontStyle: 'italic', maxWidth: '520px', marginLeft: 'auto', marginRight: 'auto' } },
+            'New here? The sample is a small, entirely fictional studio archive, a worked example to explore. Clear it any time from the Project menu, or start your own with a new entry.') : null);
       } else {
         emptyCell.textContent = 'Nothing in the register matches. Clear the search or the status marks above.';
       }

@@ -14,9 +14,10 @@ historians, archivists, curators, conservators, community researchers, and
 students, working at the scale the big registries do not serve, one scholar
 or one community at a time. **You do not need to know how to code to use it.**
 
-The tool opens with a small sample already loaded, the register of an entirely
-fictional photographic studio, so you can see how everything works before you
-add anything of your own. The easiest way to use it is the live copy at
+The tool opens to a blank register that is yours; one click on **Open the
+sample register** loads a worked example, the register of an entirely
+fictional photographic studio, to explore before you add anything of your
+own. The easiest way to use it is the live copy at
 [mirl-ucsb.github.io/mirl-lacuna](https://mirl-ucsb.github.io/mirl-lacuna/):
 open it and begin. It is a static page that receives nothing; your register
 stays in your browser and in the files you save. If you would rather run your
@@ -377,12 +378,15 @@ line, which points to this tool rather than to your register.
 
 ## The sample register
 
-The bundled sample records the losses of **Studio al-Qamar of Qamariyya**, a
-photographic studio that never existed. The town, the studio, its people, and
-every loss in the register are invented, and the sample says so on its own
-front page; any resemblance to real people, places, archives, or events is
-coincidental. The five evidence images are drawn from scratch, plainly
-synthetic, and their sha-256 hashes are true hashes of the shipped files.
+The tool opens to a blank register; the bundled sample loads only when you
+ask for it, from the empty register's **Open the sample register** button or
+the **Project** menu. It records the losses of **Studio al-Qamar of
+Qamariyya**, a photographic studio that never existed. The town, the studio,
+its people, and every loss in the register are invented, and the sample says
+so on its own front page; any resemblance to real people, places, archives,
+or events is coincidental. The five evidence images are drawn from scratch,
+plainly synthetic, and their sha-256 hashes are true hashes of the shipped
+files. Clear it any time with **Project → New register**.
 
 To regenerate the sample, run `python3 samples/make-samples.py` (needs
 [Pillow](https://python-pillow.org)).
@@ -504,7 +508,7 @@ you a reference in APA or BibTeX form. Every release is archived on
 note, cite it as:
 
 > Jeff O'Brien, *MIRL Lacuna: a catalogue of an absent archive*, version
-> 1.5.1, Material / Image Research Lab, UC Santa Barbara, 2026,
+> 1.5.2, Material / Image Research Lab, UC Santa Barbara, 2026,
 > https://doi.org/10.5281/zenodo.20651020.
 
 ---

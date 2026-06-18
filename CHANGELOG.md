@@ -5,6 +5,14 @@ nothing erased, each change dated and explained. Versions follow
 [semantic versioning](https://semver.org); project files from any earlier
 version load cleanly in any later one.
 
+## 1.5.2 (2026-06-18)
+
+- **Opens to a blank register, not the sample.** A first visit now lands on
+  your own empty register; the sample loads only when you ask for it, from a
+  clear **Open the sample register** button on the empty register or the
+  **Project** menu. Once opened, the sample (or your own work) persists as
+  usual.
+
 ## 1.5.1 (2026-06-18)
 
 - **Accessibility and keyboard pass.** A visible focus ring for keyboard users

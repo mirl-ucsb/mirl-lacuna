@@ -102,6 +102,8 @@ button.btn.quiet { border-color: transparent; color: var(--ink-2); padding: 8px 
 button.btn.quiet:hover:not(:disabled) { background: transparent; color: var(--stamp); }
 button.btn.danger { color: var(--stamp); border-color: var(--stamp); }
 button.btn.danger:hover:not(:disabled) { background: var(--stamp); color: var(--bg); }
+button.btn.primary { background: var(--ink); color: var(--bg); }
+button.btn.primary:hover:not(:disabled) { background: var(--stamp); border-color: var(--stamp); color: var(--bg); }
 
 /* text-sized actions inside entries */
 button.act {

@@ -17,7 +17,9 @@ or one community at a time. **You do not need to know how to code to use it.**
 The tool opens with a small sample already loaded, the register of an entirely
 fictional photographic studio, so you can see how everything works before you
 add anything of your own. A live copy runs at
-[mirl-ucsb.github.io/mirl-lacuna](https://mirl-ucsb.github.io/mirl-lacuna/).
+[mirl-ucsb.github.io/mirl-lacuna](https://mirl-ucsb.github.io/mirl-lacuna/),
+and this repository is a **template**: click **Use this template** on GitHub
+to make your own copy of the tool (see [Making it your own](#making-it-your-own)).
 
 ![The register: a ruled ledger of the sample archive, with stamped statuses, a held-back entry, and batch selection](docs/register.png)
 
@@ -304,7 +306,50 @@ MIRL Lacuna is a plain web page with no build step and nothing to install.
   python3 -m http.server 8000
   ```
 
-  then visit `http://localhost:8000`. It also runs as-is on **GitHub Pages**.
+  then visit `http://localhost:8000`. It also runs as-is on **GitHub Pages**;
+  to put your own copy there, see the next section.
+
+---
+
+## Making it your own
+
+MIRL Lacuna is built to be copied. The repository is a GitHub **template**:
+open it on GitHub, click **Use this template**, and you get your own copy of
+the tool, under your own name, with its own address on GitHub Pages. There
+are three ways to run it, from lightest to most settled:
+
+1. **Just open it.** Use the [hosted copy](https://mirl-ucsb.github.io/mirl-lacuna/),
+   or download this repository and double-click `index.html`. Your register
+   lives in your browser and in the project files you choose to save. Nothing
+   is sent anywhere.
+2. **Your own copy of the tool.** Use the template to put Lacuna under your
+   account, then turn it on at **Settings → Pages → Deploy from branch →
+   main / root**. Your copy runs at `your-name.github.io/your-repo/` with no
+   edits; the paths are already relative. Choose this for a stable, branded
+   home, or a shared instance for a lab or a class. Set the register's title,
+   compiler, and mark (siglum) in the front matter inside the app.
+3. **Publish a register.** When a register is ready to be seen, use
+   **Export → Finding aid** for one self-contained page, or **Export →
+   Public data** for the consent-applied JSON, and put that wherever you
+   like. Only what you marked for publication travels.
+
+**Where your data lives, and where it must not.** This is the one thing to be
+clear about. The entries you type live in your browser, and in the project
+files and locked files you save to disk. They do **not** become part of your
+GitHub copy, and they should not. A register can hold restricted testimony,
+the identities of narrators, and places unsafe to publish; committing the
+working file to a repository, even a private one, copies all of that onto
+servers you do not control, which is exactly what the consent model and the
+lock exist to prevent. Keep the working file local, lock it before it leaves
+your desk, and let only the consent-filtered exports go out. The template
+gives you the tool, not a place to store the people in it.
+
+Two practical notes. A copy made from the template starts its own history
+and does not track this one, so later versions here will not reach it on
+their own; to take an update, replace the code files from a fresh download.
+And if you publish your copy under your own name, edit
+[`CITATION.cff`](CITATION.cff) to credit yourself, and remove the `doi:`
+line, which points to this tool rather than to your register.
 
 ---
 

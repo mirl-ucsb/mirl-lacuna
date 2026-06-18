@@ -16,10 +16,12 @@ or one community at a time. **You do not need to know how to code to use it.**
 
 The tool opens with a small sample already loaded, the register of an entirely
 fictional photographic studio, so you can see how everything works before you
-add anything of your own. A live copy runs at
-[mirl-ucsb.github.io/mirl-lacuna](https://mirl-ucsb.github.io/mirl-lacuna/),
-and this repository is a **template**: click **Use this template** on GitHub
-to make your own copy of the tool (see [Making it your own](#making-it-your-own)).
+add anything of your own. The easiest way to use it is the live copy at
+[mirl-ucsb.github.io/mirl-lacuna](https://mirl-ucsb.github.io/mirl-lacuna/):
+open it and begin. It is a static page that receives nothing; your register
+stays in your browser and in the files you save. If you would rather run your
+own copy of the tool, this repository is a template (see
+[Making it your own](#making-it-your-own)).
 
 ![The register: a ruled ledger of the sample archive, with stamped statuses, a held-back entry, and batch selection](docs/register.png)
 
@@ -313,15 +315,19 @@ MIRL Lacuna is a plain web page with no build step and nothing to install.
 
 ## Making it your own
 
-MIRL Lacuna is built to be copied. The repository is a GitHub **template**:
-open it on GitHub, click **Use this template**, and you get your own copy of
-the tool, under your own name, with its own address on GitHub Pages. There
-are three ways to run it, from lightest to most settled:
+For most people the [hosted copy](https://mirl-ucsb.github.io/mirl-lacuna/) is
+all they need, and it is the simplest place to start. Because Lacuna is a
+static page with no server behind it, using the hosted copy is exactly as
+private as running your own: it receives nothing, and your register stays on
+your machine. Running your own copy is worth it when you want a home under
+your own name, a version that cannot change under you, customization, or an
+offline deployment. There are three ways to run it, from lightest to most
+settled:
 
 1. **Just open it.** Use the [hosted copy](https://mirl-ucsb.github.io/mirl-lacuna/),
    or download this repository and double-click `index.html`. Your register
    lives in your browser and in the project files you choose to save. Nothing
-   is sent anywhere.
+   is sent anywhere, on either path.
 2. **Your own copy of the tool.** Use the template to put Lacuna under your
    account, then turn it on at **Settings → Pages → Deploy from branch →
    main / root**. Your copy runs at `your-name.github.io/your-repo/` with no

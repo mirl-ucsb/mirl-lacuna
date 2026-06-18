@@ -370,6 +370,12 @@ table.tally td.bar svg { display: block; }
 .atlas-plate .pt-core { fill: var(--stamp); }
 .atlas-plate .ptlab { font-family: var(--mono); font-size: 10.5px; letter-spacing: .04em; fill: var(--stamp); }
 .atlas-plate .site:hover .pt { stroke-width: 2.2; }
+/* working view: entries not yet cleared for publication, shown faintly */
+.atlas-plate .site.preview .pt { stroke: var(--ink-3); }
+.atlas-plate .site.preview .pt-core { fill: var(--ink-3); }
+.atlas-plate .site.preview .ptlab { fill: var(--ink-3); }
+table.gazetteer tr.preview td { color: var(--ink-3); }
+.gaz-state { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
 .atlas-caption { text-align: center; font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); padding: 12px 10px 10px; border-top: 1px solid var(--line-2); margin-top: 5px; }
 table.gazetteer { width: 100%; border-collapse: collapse; margin-top: 26px; border-top: 3px double var(--line-2); }
 table.gazetteer th { font-family: var(--mono); font-size: 12px; font-weight: 400; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); text-align: left; padding: 11px 14px 9px; border-bottom: 1px solid var(--line-2); }

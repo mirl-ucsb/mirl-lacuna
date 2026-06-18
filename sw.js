@@ -5,13 +5,14 @@
    vendored libraries, and the sample images cache-first (they do not
    change). Bump CACHE with each release so old copies are cleared. */
 
-const CACHE = 'mirl-lacuna-v1.4.1';
+const CACHE = 'mirl-lacuna-v1.5.0';
 
 const CORE = [
   './',
   'index.html',
   'css/style.css',
   'js/model.js',
+  'js/geocode.js',
   'js/citation.js',
   'js/register.js',
   'js/record.js',
@@ -24,6 +25,7 @@ const CORE = [
   'js/app.js',
   'vendor/openseadragon.min.js',
   'vendor/land.js',
+  'vendor/gazetteer.js',
   'samples/sample-data.js',
   'samples/img/copy-portrait-daughters.png',
   'samples/img/inventory-page.png',

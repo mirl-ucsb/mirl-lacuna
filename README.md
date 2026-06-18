@@ -178,6 +178,17 @@ of everything. *Approximate* publishes it rounded to about 10 km, findable
 but not targetable. *Exact* publishes it precisely. Locations can endanger
 people and sites; nothing is published until you say how.
 
+You do not need to find latitude and longitude by hand. Type a place into an
+entry, a town ("Beirut") or a specific place whose name ends in a town
+("Institute of Palestine Studies, Beirut"), and Lacuna sets it on the atlas
+at a city-level, approximate point, resolved against a gazetteer bundled in
+the tool, on your machine, sending nothing anywhere. For a precise pin on a
+specific building you can press **Look up online**, which (only then, only
+because you asked) sends the place name to OpenStreetMap. Coordinates you
+type by hand are always respected. In the working register the atlas shows
+everything you have located, drawing entries not yet cleared for publication
+faintly, so you see your work while the exports stay strict.
+
 ---
 
 ## The people who remember
@@ -434,10 +445,17 @@ To regenerate the sample, run `python3 samples/make-samples.py` (needs
 - **Offline use** is a small hand-written service worker (`sw.js`): code and
   styles fetch network-first so updates arrive when there is a connection;
   fonts, vendored libraries, and the sample images are cache-first.
+- **Geocoding** resolves a typed place against a gazetteer bundled in the
+  repo (`vendor/gazetteer.js`, built from GeoNames cities, rounded to about a
+  kilometre), entirely in the browser. The resolver matches the whole string,
+  then comma-separated segments last first, treating a trailing country name
+  as the country slot rather than a same-named town. The optional online
+  lookup uses OpenStreetMap's Nominatim, only on an explicit press.
 - **No data leaves your machine.** Everything runs in the browser. The only
   network requests Lacuna ever makes are the ones you ask for: opening a
-  IIIF copy, fetching a URL to hash it, or asking the Internet Archive to
-  save one.
+  IIIF copy, fetching a URL to hash it, asking the Internet Archive to save
+  one, or pressing Look up online to geocode a place. Typing a place resolves
+  offline and sends nothing.
 
 ### Layout
 
@@ -448,6 +466,7 @@ mirl-lacuna/
 ├── css/style.css       # the ledger
 ├── js/
 │   ├── model.js        # vocabularies, state, autosave, sha-256, thumbnails
+│   ├── geocode.js      # type a place, resolve it to a point (offline + opt-in online)
 │   ├── register.js     # the ruled table, filters, front matter
 │   ├── record.js       # the memorial notice + the cataloguer's desk + IIIF
 │   ├── timeline.js     # the chronicle, and the keeping of loss events
@@ -458,7 +477,7 @@ mirl-lacuna/
 │   ├── importers.js    # CSV import, project merge, duplicates, fixity
 │   ├── exporters.js    # finding aid, memorial book, CSV, public JSON
 │   └── app.js          # routes, menus, dialogs, wiring
-├── vendor/             # openseadragon.min.js · land.js (+ its generator)
+├── vendor/             # openseadragon.min.js · land.js · gazetteer.js (+ generators)
 ├── fonts/              # Spectral, IBM Plex Mono, Noto Naskh Arabic (woff2)
 ├── samples/            # the fictional studio register + its generator
 └── docs/               # the screenshots in this README
@@ -477,7 +496,7 @@ you a reference in APA or BibTeX form. Every release is archived on
 note, cite it as:
 
 > Jeff O'Brien, *MIRL Lacuna: a catalogue of an absent archive*, version
-> 1.4.2, Material / Image Research Lab, UC Santa Barbara, 2026,
+> 1.5.0, Material / Image Research Lab, UC Santa Barbara, 2026,
 > https://doi.org/10.5281/zenodo.20651020.
 
 ---
@@ -485,5 +504,6 @@ note, cite it as:
 Built at the [Material / Image Research Lab](https://mirl.arthistory.ucsb.edu),
 Department of History of Art & Architecture, UC Santa Barbara.
 Released under the MIT License. OpenSeadragon is BSD-licensed; the coastline
-is Natural Earth (public domain); Spectral, IBM Plex Mono, and Noto Naskh
-Arabic are under the SIL Open Font License.
+is Natural Earth (public domain); the place gazetteer is built from
+[GeoNames](https://www.geonames.org) (CC BY 4.0); Spectral, IBM Plex Mono,
+and Noto Naskh Arabic are under the SIL Open Font License.

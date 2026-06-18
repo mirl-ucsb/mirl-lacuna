@@ -877,7 +877,7 @@ LC.Desk = (function () {
     const loc = r.location;
     const locPick = U.h('div', { class: 'marks-pick' });
     LC.vocab.LOCPUB.forEach(lp => {
-      const b = U.h('button', { class: 'mark st-unlocated' + (loc.publish === lp.key ? ' on' : ''), title: lp.gloss }, lp.label);
+      const b = U.h('button', { class: 'mark st-unlocated' + (loc.publish === lp.key ? ' on' : ''), title: lp.gloss, 'data-pub': lp.key }, lp.label);
       b.addEventListener('click', () => {
         loc.publish = lp.key;
         locPick.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
@@ -885,15 +885,86 @@ LC.Desk = (function () {
       });
       locPick.append(b);
     });
-    desk.append(sect('Place', 'for the atlas; published only with your say-so',
-      field(r, 'Place name', () => loc.place, v => { loc.place = v; }, { ph: 'site, town, region' }),
+
+    /* coordinates: typed by hand, or filled from a place name (below) */
+    const latInput = U.h('input', { type: 'text', value: loc.lat == null ? '' : loc.lat, placeholder: 'e.g. 34.42' });
+    const lonInput = U.h('input', { type: 'text', value: loc.lon == null ? '' : loc.lon, placeholder: 'e.g. -119.70' });
+    const onManual = () => {
+      const a = parseFloat(latInput.value), b = parseFloat(lonInput.value);
+      loc.lat = isFinite(a) ? a : null; loc.lon = isFinite(b) ? b : null;
+      r._coordsManual = true;            /* the cataloguer set these; do not overwrite */
+      setGeoNote('', '');
+      LC.App.entryChanged(r);
+    };
+    latInput.addEventListener('input', onManual);
+    lonInput.addEventListener('input', onManual);
+
+    /* the place name, which can populate the Atlas on its own */
+    const geoNote = U.h('div', { class: 'note' });
+    function setGeoNote(msg, kind) {
+      geoNote.innerHTML = '';
+      geoNote.style.color = kind === 'match' ? 'var(--blue)' : (kind === 'miss' ? 'var(--stamp)' : '');
+      if (msg) geoNote.append(msg);
+    }
+    function applyMatch(m, precise) {
+      const round = precise ? (x => Math.round(x * 1e5) / 1e5) : (x => Math.round(x * 100) / 100);
+      loc.lat = round(m.lat); loc.lon = round(m.lon);
+      latInput.value = loc.lat; lonInput.value = loc.lon;
+      r._coordsManual = false;
+      LC.App.entryChanged(r, true);
+    }
+    const placeInput = U.h('input', { type: 'text', value: loc.place || '', dir: 'auto',
+      placeholder: 'a town, or "Institute of Palestine Studies, Beirut"' });
+    let geoTimer = null;
+    const tryLocal = () => {
+      if (!window.LC || !LC.Geocode) return;
+      if (r._coordsManual && (loc.lat != null || loc.lon != null)) {
+        setGeoNote('Coordinates were entered by hand; clear them to match from the place name.', '');
+        return;
+      }
+      const m = LC.Geocode.resolveLocal(loc.place);
+      if (m) {
+        applyMatch(m, false);
+        setGeoNote('On the atlas: ' + LC.Geocode.describe(m) + ' · approximate. Choose Approximate or Exact below to publish it.', 'match');
+      } else if (loc.place.trim()) {
+        setGeoNote('No place matched offline. Look it up online, or type coordinates.', 'miss');
+      } else {
+        setGeoNote('', '');
+      }
+    };
+    placeInput.addEventListener('input', () => {
+      loc.place = placeInput.value;
+      LC.App.entryChanged(r);
+      clearTimeout(geoTimer); geoTimer = setTimeout(tryLocal, 350);
+    });
+
+    const onlineBtn = U.h('button', {
+      class: 'act', title: 'Ask OpenStreetMap to resolve this exact place',
+      onclick: async () => {
+        if (!loc.place.trim()) return U.toast('Type a place first');
+        setGeoNote('Looking up online…', '');
+        try {
+          const m = await LC.Geocode.lookupOnline(loc.place);
+          applyMatch(m, true);
+          setGeoNote('Found online: ' + m.label, 'match');
+          U.toast('Place found; coordinates set');
+        } catch (e) { setGeoNote(e.message || 'The lookup failed.', 'miss'); }
+      },
+    }, 'Look up online');
+
+    desk.append(sect('Place', 'type a place and it lands on the atlas; no coordinates by hand',
+      U.h('div', { class: 'field' }, U.h('label', null, 'Place name'), placeInput, geoNote),
+      U.h('div', { class: 'add-line' }, onlineBtn,
+        U.h('span', { class: 'note', style: { marginLeft: '14px' } },
+          'Offline matching stays on your machine. The online lookup sends the place name to OpenStreetMap, only when you press it.')),
       U.h('div', { class: 'row2' },
-        field(r, 'Latitude', () => loc.lat == null ? '' : loc.lat, v => { const n = parseFloat(v); loc.lat = isFinite(n) ? n : null; }, { ph: 'e.g. 34.42' }),
-        field(r, 'Longitude', () => loc.lon == null ? '' : loc.lon, v => { const n = parseFloat(v); loc.lon = isFinite(n) ? n : null; }, { ph: 'e.g. -119.70' })),
+        U.h('div', { class: 'field' }, U.h('label', null, 'Latitude'), latInput),
+        U.h('div', { class: 'field' }, U.h('label', null, 'Longitude'), lonInput)),
       U.h('div', { class: 'field' },
         U.h('label', null, 'Publication of this place'), locPick,
         U.h('div', { class: 'note' },
           'Withheld by default: locations can endanger people and sites. Approximate publishes the place rounded to about 10 km, findable but not targetable. Exact publishes it precisely.'))));
+    if (loc.place && loc.place.trim()) setTimeout(tryLocal, 0);
 
     const pubBox = U.h('input', { type: 'checkbox' });
     pubBox.checked = !!r.publish;

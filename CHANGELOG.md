@@ -5,6 +5,26 @@ nothing erased, each change dated and explained. Versions follow
 [semantic versioning](https://semver.org); project files from any earlier
 version load cleanly in any later one.
 
+## 1.5.0 (2026-06-17)
+
+- **Type a place, see it on the atlas, no coordinates by hand.** A bundled
+  offline gazetteer (built from GeoNames) resolves a typed place as you
+  write it: a city ("Beirut"), or a specific place whose name ends in a
+  known city ("Institute of Palestine Studies, Beirut"), to a city-level,
+  approximate point. This runs entirely in the browser and sends nothing
+  anywhere. A trailing country name is read as the country, not a same-named
+  town, and a handful of historic and exonymous names (Palmyra, Tombouctou,
+  Constantinople) are bridged to their gazetteer entries.
+- **Optional online lookup**, only when you press the button, asks
+  OpenStreetMap to resolve a specific place precisely. It is the one case
+  where a place name leaves the machine, and it is never automatic.
+- Coordinates entered by hand are respected and never overwritten by the
+  place name.
+- **The working atlas now shows every located entry**, so a place you typed
+  appears at once; entries not yet cleared for publication are drawn faintly
+  and listed as held back. Every export stays strict: only published entries
+  with a publishable place travel, exactly as before.
+
 ## 1.4.2 (2026-06-11)
 
 - Releases are archived on [Zenodo](https://zenodo.org) from this version

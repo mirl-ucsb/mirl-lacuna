@@ -2,7 +2,7 @@
 
 **A catalogue for what is gone.**
 
-> **In active development.** This tool is being built and refined in the open. Its features, file formats, and interface may still change, and some parts may be incomplete or rough. Please keep your own copies of anything important, and reports of whatever breaks are welcome.
+> **In active development.** This tool is being built and refined in the open. Its features, file formats, and interface may still change, and some parts may be incomplete or rough. Because it is still in development, do not rely on it alone to protect the identities and locations it records, and confirm what is safe to release before you export or share a finding aid. Please keep your own copies of anything important, and reports of whatever breaks are welcome.
 
 MIRL Lacuna is a free, local-first cataloguer for archives that no longer
 exist. Most collection software assumes the object is on a shelf; Lacuna

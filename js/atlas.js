@@ -117,7 +117,17 @@ LC.Atlas = (function () {
     sect.innerHTML = '<div class="sheet">' + html({ project: LC.state.project, records: LC.state.records }, {}) + '</div>';
     sect.querySelectorAll('[data-id]').forEach(el => {
       el.style.cursor = 'pointer';
-      el.addEventListener('click', () => { location.hash = '#/entry/' + el.dataset.id; });
+      const go = () => { location.hash = '#/entry/' + el.dataset.id; };
+      el.addEventListener('click', go);
+      /* SVG map pins carry no inner link, so give them their own keyboard handle;
+         the gazetteer rows already hold a focusable entry link */
+      if (el.tagName.toLowerCase() === 'g') {
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('role', 'button');
+        const rec = LC.Model.get(el.dataset.id);
+        el.setAttribute('aria-label', 'Place of last record: ' + (rec ? LC.Model.title(rec) : el.dataset.id));
+        el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+      }
     });
   }
 

@@ -50,6 +50,7 @@ LC.Importers = (function () {
     place: 'place', location: 'place', site: 'place',
     latitude: 'lat', lat: 'lat',
     longitude: 'lon', lon: 'lon', lng: 'lon',
+    locationprecision: 'locPublish', precision: 'locPublish',
   };
   const normHeader = h => String(h || '').toLowerCase().replace(/[^a-z]/g, '');
 
@@ -102,6 +103,10 @@ LC.Importers = (function () {
       const lat = parseFloat(v.lat), lon = parseFloat(v.lon);
       if (isFinite(lat)) r.location.lat = lat;
       if (isFinite(lon)) r.location.lon = lon;
+      if (v.locPublish) {
+        const pub = v.locPublish.toLowerCase();
+        if (pub === 'exact' || pub === 'approximate' || pub === 'withheld') r.location.publish = pub;
+      }
 
       S.records.push(r);
       ids.push(r.id);

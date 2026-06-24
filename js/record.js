@@ -862,12 +862,15 @@ LC.Desk = (function () {
         }, 'Restore this entry'),
         U.h('button', {
           class: 'btn danger', onclick: () => {
-            if (confirm('Remove entry ' + r.id + ' from the project entirely? Unlike striking, this cannot be undone.')) {
-              LC.Model.remove(r.id);
+            const idx = LC.Model.remove(r.id);
+            LC.Store.save();
+            U.toastAction('Entry ' + r.id + ' removed from the project', 'Undo', () => {
+              LC.Model.reinsert(r, idx);
               LC.Store.save();
-              U.toast('Entry ' + r.id + ' removed from the project');
-              location.hash = '#/register';
-            }
+              U.toast('Entry ' + r.id + ' restored');
+              location.hash = '#/entry/' + r.id;
+            });
+            location.hash = '#/register';
           },
         }, 'Remove it outright')),
       U.h('div', { class: 'note', style: { marginTop: '10px' } },

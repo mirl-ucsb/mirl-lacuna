@@ -125,6 +125,7 @@ LC.App = (function () {
 
   function projectChanged() {
     S.project.modified = U.nowISO();
+    U.saveState('saving');
     LC.Store.save();
     /* update the displayed front matter in place, keeping focus in the form */
     const t = document.querySelector('.fm-title');
@@ -684,6 +685,7 @@ LC.App = (function () {
 
     window.addEventListener('hashchange', route);
     route();
+    U.saveState('saved');
 
     /* a gentle word when an embargo date has passed */
     const lapsed = LC.Model.lapsedEmbargoes();

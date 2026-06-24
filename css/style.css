@@ -495,6 +495,11 @@ table.register th.sel, table.register td.sel { width: 36px; border-left: 0; text
   opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; max-width: 80vw;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+.toast.has-act { pointer-events: auto; }
+.toast-act { margin-left: 6px; background: transparent; border: 0; border-bottom: 1.5px solid var(--stamp); color: var(--stamp); font: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer; pointer-events: auto; padding: 0 1px 1px; }
+.toast-act:hover { background: var(--stamp); color: var(--surface); }
+.save-state { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-3); align-self: center; min-width: 52px; }
+.save-state[data-s="saving"] { color: var(--stamp); }
 
 .sr { position: absolute; left: -9999px; }
 

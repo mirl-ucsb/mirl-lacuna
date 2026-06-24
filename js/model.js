@@ -27,8 +27,27 @@ LC.util = {
   toast(msg) {
     const t = document.getElementById('toast');
     if (!t) return;
-    t.textContent = msg; t.classList.add('show');
+    t.textContent = msg; t.classList.remove('has-act'); t.classList.add('show');
     clearTimeout(LC._tt); LC._tt = setTimeout(() => t.classList.remove('show'), 2300);
+  },
+  /* a toast that offers one action (e.g. Undo) for a few seconds */
+  toastAction(msg, label, fn) {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    t.textContent = msg + '  ';
+    const b = document.createElement('button');
+    b.className = 'toast-act'; b.textContent = label;
+    b.addEventListener('click', () => { t.classList.remove('show', 'has-act'); fn(); });
+    t.append(b);
+    t.classList.add('show', 'has-act');
+    clearTimeout(LC._tt); LC._tt = setTimeout(() => t.classList.remove('show', 'has-act'), 7000);
+  },
+  /* the small autosave indicator in the masthead */
+  saveState(s) {
+    const el = document.getElementById('save-state');
+    if (!el) return;
+    el.textContent = s === 'saving' ? 'Saving…' : s === 'saved' ? 'Saved' : '';
+    el.dataset.s = s || '';
   },
   download(name, blob) {
     const a = document.createElement('a');
@@ -225,6 +244,13 @@ LC.Model = (function () {
   function remove(id) {
     const i = S.records.findIndex(r => r.id === id);
     if (i >= 0) S.records.splice(i, 1);
+    S.project.modified = LC.util.nowISO();
+    return i;
+  }
+  /* put a removed record back where it was, for the Undo after Remove it outright */
+  function reinsert(rec, index) {
+    const i = (index == null || index < 0) ? S.records.length : Math.min(index, S.records.length);
+    S.records.splice(i, 0, rec);
     S.project.modified = LC.util.nowISO();
   }
 
@@ -425,7 +451,7 @@ LC.Model = (function () {
     S.records = [];
   }
 
-  return { newRecord, normalize, nextId, get, add, remove, duplicate, touch, title, altTitles,
+  return { newRecord, normalize, nextId, get, add, remove, reinsert, duplicate, touch, title, altTitles,
     serialize, publicClone, heldBackCount, lapsedEmbargoes, setStatus,
     sourceOf, addSource, removeSource, restsOn, restrictSource,
     eventOf, addEvent, removeEvent, loadData, reset };
@@ -511,6 +537,7 @@ LC.Store = (function () {
       }
       try {
         localStorage.setItem(KEY, payload);
+        LC.util.saveState('saved');
       } catch (e) {
         if (!warned) {
           warned = true;

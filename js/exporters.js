@@ -300,5 +300,38 @@ LC.Exporters = (function () {
     setTimeout(() => window.print(), 150);
   }
 
-  return { saveProject, publicJSON, registerCSV, findingAid, printBook, printNotice };
+  /* ---------- a plain account of what an export carries, and what stays ---------- */
+  function releaseSummary() {
+    const pub = LC.Model.publicClone();
+    const pubRecs = pub.records || [];
+    const pubIds = new Set(pubRecs.map(r => r.id));
+    const all = S.records || [];
+    let evidence = 0, sightings = 0, placesExact = 0, placesApprox = 0;
+    pubRecs.forEach(r => {
+      evidence += (r.evidence || []).length;
+      sightings += (r.sightings || []).length;
+      const lp = r.location && r.location.publish;
+      if (lp === 'exact') placesExact++; else if (lp === 'approximate') placesApprox++;
+    });
+    let evidenceWithheld = 0, sightingsWithheld = 0, placesWithheld = 0;
+    all.forEach(r => {
+      if (!pubIds.has(r.id)) return;
+      (r.evidence || []).forEach(e => { if (e.consent !== 'public') evidenceWithheld++; });
+      (r.sightings || []).forEach(x => { if (x.consent !== 'public') sightingsWithheld++; });
+      const loc = r.location || {};
+      if (loc.publish === 'withheld' && (loc.lat != null || (loc.place || '').trim())) placesWithheld++;
+    });
+    return {
+      total: all.length,
+      publishing: { entries: pubRecs.length, evidence, sightings, placesExact, placesApprox },
+      withheld: {
+        heldBack: all.filter(r => !r.struck && !r.publish).length,
+        struck: all.filter(r => r.struck).length,
+        evidence: evidenceWithheld, sightings: sightingsWithheld, places: placesWithheld,
+        sources: (S.project.sources || []).length,
+      },
+    };
+  }
+
+  return { saveProject, publicJSON, registerCSV, findingAid, printBook, printNotice, releaseSummary };
 })();

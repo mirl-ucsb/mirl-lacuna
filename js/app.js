@@ -89,6 +89,33 @@ LC.App = (function () {
     return close;
   }
 
+  /* ---------- release preview: a deliberate pause before a public export ---------- */
+  function confirmRelease(label, onProceed) {
+    const s = LC.Exporters.releaseSummary();
+    const p = s.publishing, w = s.withheld;
+    const n = (x, one, many) => x + ' ' + (x === 1 ? one : (many || one + 's'));
+    const line = (box, txt) => box.append(U.h('div', { class: 'rl-line' }, txt));
+    const body = U.h('div', { class: 'release-summary' });
+    body.append(U.h('p', { class: 'rl-intro' },
+      'This is what the ' + label + ' carries out of the working file. The full register, restricted material, and the people behind the aliases stay here.'));
+    const pub = U.h('div', { class: 'rl-sec rl-publish' }, U.h('h4', null, 'Leaves in the ' + label));
+    line(pub, n(p.entries, 'entry', 'entries') + ' of ' + s.total);
+    line(pub, n(p.evidence, 'evidence item') + ', public consent only');
+    line(pub, n(p.sightings, 'sighting') + ' cleared for publication');
+    line(pub, n(p.placesExact + p.placesApprox, 'place') + ' located: ' + p.placesExact + ' exact, ' + p.placesApprox + ' rounded');
+    const wh = U.h('div', { class: 'rl-sec rl-withheld' }, U.h('h4', null, 'Stays in the working file'));
+    line(wh, n(w.heldBack, 'entry', 'entries') + ' held back, ' + w.struck + ' struck');
+    line(wh, n(w.evidence, 'evidence item') + ' restricted or embargoed');
+    line(wh, n(w.sightings, 'sighting') + ' withheld by consent');
+    line(wh, n(w.places, 'place') + ' withheld; coordinates rounded unless marked exact');
+    line(wh, 'The investigation log, and every source identity behind the ' + w.sources + ' ' + (w.sources === 1 ? 'alias' : 'aliases'));
+    body.append(pub, wh);
+    sheet('Before the ' + label + ' leaves', body, [
+      { label: 'Cancel' },
+      { label: 'Export the ' + label, onclick: () => { onProceed(); } },
+    ]);
+  }
+
   /* ---------- change notifications ---------- */
   function entryChanged(r, structural) {
     LC.Model.touch(r);
@@ -626,13 +653,13 @@ LC.App = (function () {
       const act = e.target.closest('button') && e.target.closest('button').dataset.act;
       if (!act) return;
       closeMenus();
-      if (act === 'csv') LC.Exporters.registerCSV();
-      else if (act === 'json') LC.Exporters.publicJSON();
-      else if (act === 'aid') LC.Exporters.findingAid();
-      else if (act === 'book') LC.Exporters.printBook();
+      if (act === 'csv') confirmRelease('register spreadsheet', () => LC.Exporters.registerCSV());
+      else if (act === 'json') confirmRelease('public data file', () => LC.Exporters.publicJSON());
+      else if (act === 'aid') confirmRelease('finding aid', () => LC.Exporters.findingAid());
+      else if (act === 'book') confirmRelease('memorial book', () => LC.Exporters.printBook());
       else if (act === 'notice') {
         if (S.route.view !== 'entry' || !LC.Record.current) U.toast('Open an entry first; the notice prints one entry');
-        else LC.Exporters.printNotice(LC.Record.current);
+        else confirmRelease('notice', () => LC.Exporters.printNotice(LC.Record.current));
       }
       else if (act === 'print') window.print();
     });

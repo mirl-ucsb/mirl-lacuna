@@ -94,14 +94,16 @@ LC.Tombstone = (function () {
   /* dated reports about the thing: the dossier that holds contradiction */
   function sightingsHTML(r, opts) {
     const p = opts.project || LC.state.project;
-    const xs = r.sightings || [];
+    const all = r.sightings || [];
+    const xs = opts.publicOnly ? all.filter(x => x.consent === 'public') : all;
     if (!xs.length) return '';
     let h = '<div class="ts-sect"><h3>Sightings and reports</h3><table class="ev-table">';
     xs.forEach((x, i) => {
       const alias = aliasOf(x.sourceId, p);
       h += '<tr><td class="kind" style="width:120px;padding-top:13px">' + U.esc(x.date || 'undated') + '</td><td>';
       h += '<div class="ev-label">' + U.esc(x.kind) + (x.place ? ' · ' + U.esc(x.place) : '') + '</div>';
-      const meta = [alias ? 'told by ' + U.esc(alias) : ''].filter(Boolean).join(' · ');
+      const meta = [alias ? 'told by ' + U.esc(alias) : '',
+        (!opts.publicOnly && x.consent !== 'public') ? 'withheld from exports' : ''].filter(Boolean).join(' · ');
       if (meta) h += '<div class="ev-meta">' + meta + '</div>';
       if (x.note) h += '<div class="ev-note"' + dirAttr(x.note) + '>' + U.esc(x.note) + '</div>';
       h += '</td><td><span class="bearing ' + U.esc(x.bearing) + '">' + U.esc(x.bearing) + '</span></td></tr>';
@@ -702,6 +704,17 @@ LC.Desk = (function () {
           });
           bearingPick.append(btn);
         });
+        const sConsentSel = U.h('select', null, ...LC.vocab.CONSENT.map(c =>
+          U.h('option', { value: c.key, selected: x.consent === c.key ? '' : null }, c.label + ': ' + c.gloss)));
+        const sUntilInput = U.h('input', { type: 'date', value: x.until || '' });
+        sUntilInput.addEventListener('input', () => { x.until = sUntilInput.value; LC.App.entryChanged(r); });
+        const sUntilField = U.h('div', { class: 'field', style: { display: x.consent === 'embargoed' ? '' : 'none' } },
+          U.h('label', null, 'Embargoed until'), sUntilInput);
+        sConsentSel.addEventListener('change', () => {
+          x.consent = sConsentSel.value;
+          sUntilField.style.display = x.consent === 'embargoed' ? '' : 'none';
+          LC.App.entryChanged(r);
+        });
         const item = U.h('div', { class: 'item' },
           U.h('div', { class: 'item-head' },
             U.h('span', { class: 'n' }, 'Report ' + (i + 1)),
@@ -715,6 +728,9 @@ LC.Desk = (function () {
             U.h('div', { class: 'field' }, U.h('label', null, 'On whose word'),
               sourceSelect(x.sourceId, v => { x.sourceId = v; LC.App.entryChanged(r); })),
             U.h('div', { class: 'field' }, U.h('label', null, 'Bearing on the status'), bearingPick)),
+          U.h('div', { class: 'field' }, U.h('label', null, 'Consent'), sConsentSel,
+            U.h('div', { class: 'note' }, 'Only sightings marked public enter exports and the finding aid. The narrator’s alias is all that ever shows.')),
+          sUntilField,
           field(r, 'Note', () => x.note, v => { x.note = v; }, { ph: 'what was reported' }));
         box.append(item);
       });
@@ -724,12 +740,12 @@ LC.Desk = (function () {
       box,
       U.h('div', { class: 'add-line' }, U.h('button', {
         class: 'act', onclick: () => {
-          r.sightings.push({ id: U.uid(), date: '', kind: 'seen', bearing: 'supports', place: '', sourceId: null, note: '' });
+          r.sightings.push({ id: U.uid(), date: '', kind: 'seen', bearing: 'supports', place: '', sourceId: null, note: '', consent: 'restricted', until: '' });
           LC.App.entryChanged(r, true); redraw();
         },
       }, '+ Add a sighting or report')),
       U.h('div', { class: 'note' },
-        'Sightings publish with the entry, under their narrators’ aliases. What must stay private belongs in the investigation log below.'));
+        'Each sighting carries its own consent: only those marked public enter exports and the finding aid, always under the narrator’s alias. What must stay private belongs in the investigation log below.'));
   }
 
   /* ----- the investigation log: the search itself, dated; never exported ----- */

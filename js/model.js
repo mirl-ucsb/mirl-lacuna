@@ -244,7 +244,7 @@ LC.Model = (function () {
     r.tags = (src.tags || []).slice();
     r.note = src.note;
     r.lastSeen = Object.assign({}, src.lastSeen);
-    r.location = Object.assign({}, src.location);
+    r.location = Object.assign({}, src.location, { publish: 'withheld' });
     S.records.push(r);
     touch(r);
     return r;
@@ -287,6 +287,7 @@ LC.Model = (function () {
     const round1 = x => Math.round(x * 10) / 10;
     clone.records.forEach(r => {
       r.log = [];
+      delete r._coordsManual;
       r.evidence = (r.evidence || []).filter(e => e.consent === 'public');
       r.sightings = (r.sightings || []).filter(x => x.consent === 'public');
       r.relations = (r.relations || []).filter(x => kept.has(x.target));

@@ -655,6 +655,7 @@ LC.App = (function () {
       closeMenus();
       if (act === 'csv') confirmRelease('register spreadsheet', () => LC.Exporters.registerCSV());
       else if (act === 'json') confirmRelease('public data file', () => LC.Exporters.publicJSON());
+      else if (act === 'geojson') confirmRelease('GeoJSON places', () => LC.Exporters.geoJSON());
       else if (act === 'aid') confirmRelease('finding aid', () => LC.Exporters.findingAid());
       else if (act === 'book') confirmRelease('memorial book', () => LC.Exporters.printBook());
       else if (act === 'notice') {

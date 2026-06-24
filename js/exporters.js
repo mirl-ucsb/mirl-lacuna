@@ -300,6 +300,29 @@ LC.Exporters = (function () {
     setTimeout(() => window.print(), 150);
   }
 
+  /* ---------- publishable places as GeoJSON, for QGIS or a web map ---------- */
+  function geoJSON() {
+    const pub = LC.Model.publicClone();
+    const features = [];
+    (pub.records || []).forEach(r => {
+      const loc = r.location || {};
+      if (typeof loc.lat === 'number' && typeof loc.lon === 'number') {
+        features.push({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [loc.lon, loc.lat] },
+          properties: {
+            id: r.id, title: LC.Model.title(r), status: r.status || '',
+            certainty: r.certainty || '', precision: loc.publish || '', place: loc.place || '',
+          },
+        });
+      }
+    });
+    if (!features.length) return U.toast('No publishable located places yet; mark a place exact or approximate.');
+    const name = U.slug(S.project.title) + '-places.geojson';
+    U.downloadText(name, JSON.stringify({ type: 'FeatureCollection', features }, null, 2), 'application/geo+json');
+    U.toast(features.length + (features.length === 1 ? ' place' : ' places') + ' saved as GeoJSON');
+  }
+
   /* ---------- a plain account of what an export carries, and what stays ---------- */
   function releaseSummary() {
     const pub = LC.Model.publicClone();
@@ -333,5 +356,5 @@ LC.Exporters = (function () {
     };
   }
 
-  return { saveProject, publicJSON, registerCSV, findingAid, printBook, printNotice, releaseSummary };
+  return { saveProject, publicJSON, registerCSV, findingAid, printBook, printNotice, releaseSummary, geoJSON };
 })();

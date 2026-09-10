@@ -31,6 +31,16 @@ own copy of the tool, this repository is a template (see
 *The register, opened on the fictional sample: stamped statuses, certainty
 marks, a held-back entry, and checkboxes for batch work.*
 
+Lacuna is one of four MIRL instruments for heritage after crisis, built to
+work alone or in sequence: [rescue-archiving](https://github.com/mirl-ucsb/rescue-archiving)
+makes a verifiable copy of at-risk online media before it disappears,
+[MIRL Aftermath](https://github.com/mirl-ucsb/mirl-aftermath) builds the
+condition dossier for damage to what still stands, Lacuna catalogues what is
+gone, and the [MIRL 3D Analyzer](https://github.com/mirl-ucsb/mirl-3d-analyzer)
+measures what survives. Each keeps its exports plain and portable, so work
+moves between the tools without lock-in. The four together:
+[mirl.arthistory.ucsb.edu/mirl-tools](https://mirl.arthistory.ucsb.edu/mirl-tools/).
+
 ---
 
 ## What you might use it for

@@ -129,8 +129,10 @@ a printed register ends.
 - **Sightings and reports**: a dated dossier under the entry ("offered for
   sale, 1977", "seen in a private collection, 2003"), each report marked as
   *supporting* or *complicating* the stated status, because post-conflict
-  knowledge is plural and the register should hold contradiction rather than
-  resolve it away.
+  knowledge is plural and the register records contradiction rather than
+  resolving it away. Each sighting carries its own **consent state** (public,
+  restricted, or embargoed with a date) and starts restricted; only public
+  sightings enter any export.
 - **A history of its fate.** When a status changes, the old one is kept, with
   the date and a line on why: the ledger never erases. A recovery shows as a
   recovery ("formerly unlocated, to June 2026").
@@ -299,7 +301,17 @@ Two more layers of fieldwork insurance:
   sample included) is cached in the browser, so the register opens and works
   with no connection at all.
 
-From the **Export** menu:
+And the counterpart, for a machine that is not yours: **Project · Forget on
+this device** clears everything Lacuna keeps in that browser before you walk
+away (see [Locking the file](#locking-the-file)).
+
+From the **Export** menu. Every public export first opens a **release
+preview**: a plain account of what this export carries out of the working
+file and what stays, entries published against entries held back or struck,
+evidence and sightings by consent, places exact, rounded, or withheld, and a
+reminder that the investigation log and the identities behind the aliases
+never travel. Cancel costs nothing; exporting is a decision made with the
+facts in view.
 
 - **Finding aid (.html)**: the whole register as a single, self-contained
   page (fonts included), ready for a website, an email attachment, or a USB
@@ -316,7 +328,12 @@ From the **Export** menu:
   memorial notice mourns; this one asks. Evidence consent and place
   publication apply as everywhere.
 - **Spreadsheet (.csv)** of the register, for sorting and counting elsewhere.
+  It carries the location-precision column, so the place-publication decision
+  survives a round trip back through CSV import.
 - **Public data (.json)**, the machine-readable register with consent applied.
+- **Places as GeoJSON (.geojson)**: the publishable located places as a
+  FeatureCollection, for QGIS or a web map. Published entries only; withheld
+  places absent; approximate places already rounded.
 - **Print this view**, for paper copies of the register or a single notice.
 
 Every entry also writes its own **citation**, in Chicago, MLA, APA, or
@@ -370,7 +387,7 @@ settled:
 **Where your data lives, and where it must not.** This is the one thing to be
 clear about. The entries you type live in your browser, and in the project
 files and locked files you save to disk. They do **not** become part of your
-GitHub copy, and they should not. A register can hold restricted testimony,
+GitHub copy, and they should not. A register can carry restricted testimony,
 the identities of narrators, and places unsafe to publish; committing the
 working file to a repository, even a private one, copies all of that onto
 servers you do not control, which is exactly what the consent model and the
@@ -492,6 +509,8 @@ To regenerate the sample, run `python3 samples/make-samples.py` (needs
 ```
 mirl-lacuna/
 ├── index.html          # the page
+├── protection.html     # what this protects, and what it does not
+├── tests.html          # the proof sheet: the consent boundary, tested
 ├── sw.js               # offline support
 ├── css/style.css       # the ledger
 ├── js/
@@ -505,7 +524,7 @@ mirl-lacuna/
 │   ├── indexes.js      # the back of the book
 │   ├── citation.js     # Chicago / MLA / APA / BibTeX per entry
 │   ├── importers.js    # CSV import, project merge, duplicates, fixity
-│   ├── exporters.js    # finding aid, memorial book, CSV, public JSON
+│   ├── exporters.js    # finding aid, memorial book, CSV, public JSON, GeoJSON, release preview
 │   └── app.js          # routes, menus, dialogs, wiring
 ├── vendor/             # openseadragon.min.js · land.js · gazetteer.js (+ generators)
 ├── fonts/              # Spectral, IBM Plex Mono, Noto Naskh Arabic (woff2)

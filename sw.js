@@ -5,11 +5,12 @@
    vendored libraries, and the sample images cache-first (they do not
    change). Bump CACHE with each release so old copies are cleared. */
 
-const CACHE = 'mirl-lacuna-v1.6.0';
+const CACHE = 'mirl-lacuna-v1.7.0';
 
 const CORE = [
   './',
   'index.html',
+  'protection.html',
   'css/style.css',
   'js/model.js',
   'js/geocode.js',

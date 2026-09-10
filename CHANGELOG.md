@@ -5,6 +5,41 @@ nothing erased, each change dated and explained. Versions follow
 [semantic versioning](https://semver.org); project files from any earlier
 version load cleanly in any later one.
 
+## 1.7.0 (2026-09-10)
+
+The register protects the machine it runs on.
+
+- **Forget on this device.** For a shared or borrowed machine: one action in
+  the Project menu clears everything Lacuna keeps in that browser, the
+  autosaved register (locked or not), the session's key, and the remembered
+  disk-file connection, and returns the screen to an empty register. The
+  dialog warns in red when the register exists nowhere but that browser, and
+  offers to save the project file first. Files already saved, and exports
+  already made, are untouched.
+- **What this protects, and what it does not.** A page of its own, reachable
+  from the Project menu, the lock dialog, and the forget dialog, and cached
+  for offline use: where the register lives, the four user-initiated moments
+  in which anything can leave the machine, what the lock covers and what it
+  cannot, shared machines, what exports reveal by design, and what a browser
+  tool cannot promise. Trust should rest on facts, not reassurance.
+- **The proof sheet.** `tests.html` guards the consent boundary before each
+  release: it builds a synthetic register in which every field that must
+  never publish carries a marker, runs the public clone and every exporter
+  with downloads intercepted, and proves the marker reaches no output, along
+  with coordinate rounding, precision round-tripping, source restriction,
+  cautious duplication, legacy-file normalisation, and a lock seal-and-unseal
+  round trip. It runs in the browser with no build step and never touches the
+  autosave.
+- Clearing the autosave now also cancels any save still pending, so nothing
+  rewrites itself after being forgotten.
+- **A fault the proof sheet caught on its first run, fixed.** Files saved
+  before locations had three publication states marked a publishable place
+  with a boolean `safe`. The migration meant to carry `safe` across as
+  `exact` never fired, because it judged the already-defaulted value, so
+  those places loaded as withheld: protective in direction, but it discarded
+  the cataloguer's recorded decision. The migration now reads the file's own
+  value and carries it across.
+
 ## 1.6.0 (2026-09-10)
 
 The moment of export becomes a deliberate act.

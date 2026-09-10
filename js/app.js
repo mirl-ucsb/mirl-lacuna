@@ -158,7 +158,8 @@ LC.App = (function () {
       const p1 = passField('Passphrase'), p2 = passField('The same again');
       body.append(
         U.h('p', { class: 'hint', style: { marginTop: '12px' } },
-          'The passphrase encrypts the browser autosave, the live disk file, and saved project files. It protects the file at rest: while the register is open here, it is open. There is no recovery if the passphrase is lost. Exports (the finding aid, the spreadsheet, public data) are publications and stay plain.'),
+          'The passphrase encrypts the browser autosave, the live disk file, and saved project files. It protects the file at rest: while the register is open here, it is open. There is no recovery if the passphrase is lost. Exports (the finding aid, the spreadsheet, public data) are publications and stay plain. ',
+          U.h('a', { href: 'protection.html', target: '_blank', rel: 'noopener' }, 'What this protects, and what it does not.')),
         p1.field, p2.field, err);
       sheet('Lock this register', body, [
         { label: 'Cancel', onclick: () => true },
@@ -207,6 +208,45 @@ LC.App = (function () {
         },
       ]);
     }
+  }
+
+  /* ---------- forget on this device: leave a shared machine clean ---------- */
+  async function forgetDevice() {
+    LC.Store.clear();
+    LC.Lock.remove();
+    try { await LC.Disk.forget(); } catch (e) {}
+    LC.Model.reset();
+    updateLockItem();
+    updateDiskItem();
+    S.route.id = null;
+    U.saveState('');
+    location.hash = '#/register';
+    route();
+    U.toast('Forgotten: this browser now keeps nothing of the register');
+  }
+
+  function forgetDialog() {
+    const disk = LC.Disk.state();
+    const hasWork = S.records.length > 0 || (S.project.sources || []).length > 0;
+    const body = U.h('div');
+    body.append(U.h('p', { class: 'hint', style: { marginTop: '12px' } },
+      'For leaving a shared or borrowed machine clean. This clears what Lacuna keeps in this browser: the autosaved register, locked or not, this session’s key, and the remembered disk-file connection. The screen returns to an empty register.'));
+    body.append(U.h('p', { class: 'hint' },
+      'It does not touch a project file you saved: a .json on disk or a USB stick stays where you put it, exports already made are yours, and opening that file brings the register back. ',
+      U.h('a', { href: 'protection.html', target: '_blank', rel: 'noopener' }, 'What this protects, and what it does not.')));
+    if (disk.mode === 'active') {
+      body.append(U.h('p', { class: 'hint' },
+        'Your work is saved to ' + disk.name + '; that file keeps everything.'));
+    } else if (hasWork) {
+      body.append(U.h('p', { class: 'hint', style: { color: 'var(--stamp)' } },
+        'This register is not being saved to any file. Forgetting it here loses it. Save the project file first if it matters.'));
+    }
+    const actions = [{ label: 'Cancel' }];
+    if (hasWork && disk.mode !== 'active') {
+      actions.push({ label: 'Save the project file', onclick: () => { LC.Exporters.saveProject(); return false; } });
+    }
+    actions.push({ label: 'Forget it here', danger: true, onclick: () => { forgetDevice(); } });
+    sheet('Forget on this device', body, actions);
   }
 
   /* a modal that will not be clicked away: the register is locked */
@@ -643,12 +683,14 @@ LC.App = (function () {
       else if (act === 'open') { const i = document.getElementById('project-input'); i.value = ''; i.click(); }
       else if (act === 'save') LC.Exporters.saveProject();
       else if (act === 'lock') lockDialog();
+      else if (act === 'forget') forgetDialog();
       else if (act === 'sources') sourcesDialog();
       else if (act === 'disk') diskAction();
       else if (act === 'csv') { const i = document.getElementById('csv-input'); i.value = ''; i.click(); }
       else if (act === 'merge') { const i = document.getElementById('merge-input'); i.value = ''; i.click(); }
       else if (act === 'fixity') { const i = document.getElementById('fixity-input'); i.value = ''; i.click(); }
       else if (act === 'sample') loadSample();
+      else if (act === 'protects') window.open('protection.html', '_blank', 'noopener');
     });
     document.getElementById('export-menu').addEventListener('click', e => {
       const act = e.target.closest('button') && e.target.closest('button').dataset.act;

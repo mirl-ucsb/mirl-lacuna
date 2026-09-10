@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MIRL Lacuna · proof sheet</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .proof-sheet { max-width: 860px; margin: 0 auto; padding: 40px 44px 80px; }
+  .proof-sheet h2 { font-family: var(--serif, Spectral, Georgia, serif); font-weight: 600; margin: 34px 0 6px; font-size: 21px; }
+  .proof-intro { color: var(--ink-2); max-width: 640px; }
+  .verdict { display: inline-block; margin: 22px 0 6px; padding: 7px 16px; border: 2.5px solid var(--ink); font-family: var(--mono); font-size: 15px; letter-spacing: .18em; text-transform: uppercase; transform: rotate(-1.2deg); }
+  .verdict.bad { border-color: var(--stamp); color: var(--stamp); }
+  table.proofs { width: 100%; border-collapse: collapse; margin-top: 14px; }
+  table.proofs td { border-bottom: 1px solid var(--line, #ddd); padding: 6px 10px 6px 0; font-size: 15px; vertical-align: baseline; }
+  table.proofs td.v { font-family: var(--mono); font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; width: 74px; text-align: right; white-space: nowrap; }
+  table.proofs td.v.ok { color: var(--ink-3); }
+  table.proofs td.v.bad { color: var(--stamp); font-weight: 600; }
+  table.proofs td.v.skip { color: var(--ink-3); font-style: italic; text-transform: none; letter-spacing: 0; }
+  table.proofs .detail { display: block; color: var(--stamp); font-size: 13.5px; margin-top: 2px; }
+  .proof-sect { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); padding-top: 22px; }
+</style>
+</head>
+<body>
+
+<header class="app">
+  <div class="plate">
+    <h1>MIRL&nbsp;Lacuna</h1>
+    <span class="tag">proof sheet · the consent boundary, tested</span>
+  </div>
+  <a class="lab" href="index.html">back to the register<span class="uni">this page changes nothing</span></a>
+</header>
+
+<main>
+  <div class="proof-sheet">
+    <p class="proof-intro">Before each release, this page builds a small synthetic
+    register in which everything that must never publish carries the marker
+    <code>NEVERLEAVES</code>: restricted and embargoed evidence, withheld
+    sightings, the investigation log, source identities, withheld places, a
+    held-back entry, and a struck line. It then runs the public clone and every
+    exporter, with downloads intercepted, and proves the marker appears in no
+    output. It never reads or writes this browser's autosave, and nothing is
+    downloaded or sent anywhere.</p>
+    <div id="verdict"></div>
+    <div id="results"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="vendor/land.js"></script>
+<script src="js/model.js"></script>
+<script src="js/citation.js"></script>
+<script src="js/register.js"></script>
+<script src="js/record.js"></script>
+<script src="js/timeline.js"></script>
+<script src="js/stats.js"></script>
+<script src="js/atlas.js"></script>
+<script src="js/indexes.js"></script>
+<script src="js/importers.js"></script>
+<script src="js/exporters.js"></script>
+<script>
+(async function () {
+  'use strict';
+  const NEEDLE = 'NEVERLEAVES';
+  const results = [];
+  let section = '';
+  function sect(name) { section = name; results.push({ section: name }); }
+  function assert(name, cond, detail) { results.push({ name, ok: !!cond, detail: cond ? '' : (detail || '') }); }
+  function skip(name, why) { results.push({ name, skipped: true, detail: why }); }
+  const clean = text => !String(text).includes(NEEDLE);
+
+  /* ---------- the synthetic register ---------- */
+  const FIXTURE = {
+    format: 'mirl-lacuna', version: 1,
+    project: {
+      title: 'Invariant proofs', subtitle: '', compiler: 'The proof sheet',
+      institution: '', contact: '', note: '', siglum: 'LAC',
+      events: [{ id: 'evt-1', name: 'The fire', date: '1976-01-18', place: '', note: '' }],
+      sources: [{ id: 'src-1', alias: 'the neighbour', name: NEEDLE + ' identity',
+        contact: NEEDLE + ' contact', consent: NEEDLE + ' consent note', note: NEEDLE + ' source note' }],
+    },
+    records: [
+      { id: 'LAC-0001', titles: [{ text: 'Portrait, published', lang: '' }], creator: 'A. Cataloguer',
+        status: 'destroyed', certainty: 'attested', publish: true, eventId: 'evt-1',
+        location: { place: 'Beirut, published exact', lat: 33.8886, lon: 35.4955, publish: 'exact' },
+        _coordsManual: true,
+        evidence: [
+          { id: 'ev-pub', type: 'photograph', label: 'a public photograph', consent: 'public',
+            note: 'public evidence note', sourceId: 'src-1' },
+          { id: 'ev-res', type: 'testimony', label: NEEDLE + ' restricted testimony', consent: 'restricted',
+            note: NEEDLE + ' restricted note', sourceId: 'src-1' },
+          { id: 'ev-emb', type: 'document', label: NEEDLE + ' embargoed document', consent: 'embargoed',
+            until: '2020-01-01', note: NEEDLE + ' a lapsed embargo is a prompt, not a switch' },
+        ],
+        sightings: [
+          { id: 'si-pub', date: '2019-05-02', kind: 'seen', bearing: 'supports', place: 'Tripoli',
+            note: 'a public sighting', consent: 'public', sourceId: 'src-1' },
+          { id: 'si-res', date: '2021-11-30', kind: 'offered for sale', bearing: 'complicates',
+            place: NEEDLE + ' place of report', note: NEEDLE + ' withheld sighting', consent: 'restricted' },
+        ],
+        log: [{ id: 'lg-1', date: '2024-02-14', note: NEEDLE + ' the investigation log' }],
+        relations: [{ type: 'related', target: 'LAC-0002' }, { type: 'related', target: 'LAC-0003' },
+          { type: 'related', target: 'LAC-0004' }] },
+      { id: 'LAC-0002', titles: [{ text: NEEDLE + ' held back', lang: '' }], publish: false, status: 'looted' },
+      { id: 'LAC-0003', titles: [{ text: NEEDLE + ' struck line', lang: '' }], publish: true, struck: true, status: 'unlocated' },
+      { id: 'LAC-0004', titles: [{ text: 'Album, approximate place', lang: '' }], publish: true, status: 'dispersed',
+        location: { place: 'A nearby town', lat: 34.123456, lon: 36.654321, publish: 'approximate' } },
+      { id: 'LAC-0005', titles: [{ text: 'Ledger, place withheld', lang: '' }], publish: true, status: 'damaged',
+        location: { place: NEEDLE + ' unsafe site', lat: 33.271, lon: 35.203, publish: 'withheld' } },
+    ],
+  };
+  const loadFixture = () => LC.Model.loadData(JSON.parse(JSON.stringify(FIXTURE)));
+  const near = (a, b) => typeof a === 'number' && Math.abs(a - b) < 1e-9;
+
+  /* downloads are intercepted, never made; print is a no-op here */
+  const captured = {};
+  LC.util.download = () => {};
+  LC.util.downloadText = (name, text) => { captured[name] = String(text); };
+  window.print = () => {};
+
+  try {
+    /* ---------- the public clone ---------- */
+    sect('The public clone');
+    loadFixture();
+    const pub = LC.Model.publicClone();
+    const byId = id => (pub.records || []).find(r => r.id === id);
+    assert('Only published, unstruck entries survive: 3 of 5',
+      pub.records.length === 3 && byId('LAC-0001') && byId('LAC-0004') && byId('LAC-0005'),
+      'got ' + pub.records.map(r => r.id).join(', '));
+    assert('The held-back entry is absent', !byId('LAC-0002'));
+    assert('The struck entry is absent', !byId('LAC-0003'));
+    const r1 = byId('LAC-0001') || {};
+    assert('Only public evidence travels: 1 of 3',
+      (r1.evidence || []).length === 1 && r1.evidence[0].consent === 'public');
+    assert('A lapsed embargo date does not publish by itself',
+      !(r1.evidence || []).some(e => e.id === 'ev-emb'));
+    assert('Only public sightings travel: 1 of 2',
+      (r1.sightings || []).length === 1 && r1.sightings[0].consent === 'public');
+    assert('The investigation log never leaves', (r1.log || []).length === 0);
+    assert('The internal coordinates flag never leaves', !('_coordsManual' in r1));
+    assert('Relations only between published entries',
+      (r1.relations || []).length === 1 && r1.relations[0].target === 'LAC-0004');
+    assert('Sources reduce to id and alias alone',
+      (pub.project.sources || []).length === 1 &&
+      Object.keys(pub.project.sources[0]).sort().join(',') === 'alias,id' &&
+      pub.project.sources[0].alias === 'the neighbour');
+    const r4 = byId('LAC-0004') || {}, r5 = byId('LAC-0005') || {};
+    assert('An approximate place rounds to one decimal degree',
+      r4.location && near(r4.location.lat, 34.1) && near(r4.location.lon, 36.7),
+      'got ' + JSON.stringify(r4.location));
+    assert('An exact place publishes as recorded',
+      r1.location && near(r1.location.lat, 33.8886) && near(r1.location.lon, 35.4955));
+    assert('A withheld place leaves nothing: no name, no coordinates',
+      r5.location && r5.location.place === '' && r5.location.lat === null && r5.location.lon === null);
+    assert('The clone as a whole carries no withheld text', clean(JSON.stringify(pub)));
+
+    /* ---------- the release preview's account ---------- */
+    sect('The release preview');
+    const s = LC.Exporters.releaseSummary();
+    assert('It counts what publishes: 3 entries, 1 evidence, 1 sighting, 1 exact, 1 rounded',
+      s.total === 5 && s.publishing.entries === 3 && s.publishing.evidence === 1 &&
+      s.publishing.sightings === 1 && s.publishing.placesExact === 1 && s.publishing.placesApprox === 1,
+      JSON.stringify(s.publishing));
+    assert('It counts what stays: 1 held back, 1 struck, 2 evidence, 1 sighting, 1 place, 1 source',
+      s.withheld.heldBack === 1 && s.withheld.struck === 1 && s.withheld.evidence === 2 &&
+      s.withheld.sightings === 1 && s.withheld.places === 1 && s.withheld.sources === 1,
+      JSON.stringify(s.withheld));
+
+    /* ---------- every exporter, swept for the marker ---------- */
+    sect('The exporters');
+    LC.Exporters.publicJSON();
+    const js = captured['invariant-proofs-public.json'];
+    assert('Public JSON is produced and parses', !!js && JSON.parse(js).format === 'mirl-lacuna');
+    assert('Public JSON carries no withheld text', js && clean(js));
+    assert('Public JSON keeps what is public', js && js.includes('public evidence note'));
+
+    LC.Exporters.registerCSV();
+    const csv = captured['invariant-proofs-register.csv'];
+    const csvRows = csv ? csv.replace(/^\uFEFF/, '').trim().split('\n') : [];
+    assert('The spreadsheet is produced: a header and 3 rows', csvRows.length === 4,
+      'got ' + csvRows.length + ' lines');
+    assert('The spreadsheet carries no withheld text', csv && clean(csv));
+    assert('The spreadsheet carries the rounded coordinates, not the true ones',
+      csv && csv.includes('34.1') && !csv.includes('34.123456'));
+
+    LC.Exporters.geoJSON();
+    const geo = captured['invariant-proofs-places.geojson'];
+    const gj = geo ? JSON.parse(geo) : { features: [] };
+    assert('GeoJSON is produced with 2 features: exact and approximate',
+      gj.features.length === 2, 'got ' + gj.features.length);
+    assert('GeoJSON carries no withheld place', geo && clean(geo) &&
+      !gj.features.some(f => f.properties.precision === 'withheld'));
+    const approxF = gj.features.find(f => f.properties.precision === 'approximate');
+    assert('The approximate feature is rounded',
+      approxF && near(approxF.geometry.coordinates[0], 36.7) && near(approxF.geometry.coordinates[1], 34.1));
+
+    await LC.Exporters.findingAid();
+    const aid = captured['invariant-proofs-finding-aid.html'];
+    assert('The finding aid is produced', !!aid && aid.includes('<!doctype html>'));
+    assert('The finding aid carries no withheld text', aid && clean(aid));
+    assert('The finding aid states what it withholds',
+      aid && aid.includes('1 further entry is'));
+    assert('The finding aid keeps what is public', aid && aid.includes('a public photograph'));
+
+    LC.Exporters.printBook();
+    const bookEl = document.getElementById('book');
+    const book = bookEl ? bookEl.innerHTML : '';
+    assert('The memorial book is composed', book.includes('Invariant proofs'));
+    assert('The memorial book carries no withheld text', clean(book));
+    assert('The memorial book states what it withholds', book.includes('1 further entry is'));
+    window.dispatchEvent(new Event('afterprint'));
+
+    /* ---------- the decision round-trips ---------- */
+    sect('Round trips');
+    LC.Model.reset();
+    LC.Importers.importCSV(csv || '');
+    const imp = LC.state.records;
+    assert('The exported spreadsheet imports: 3 entries', imp.length === 3);
+    assert('Location precision survives the round trip',
+      imp[0] && imp[0].location.publish === 'exact' &&
+      imp[1] && imp[1].location.publish === 'approximate',
+      imp.map(r => r.location.publish).join(', '));
+    assert('Imported entries arrive held back', imp.every(r => !r.publish));
+    assert('The withheld place stays withheld with no coordinates',
+      imp[2] && imp[2].location.publish === 'withheld' && imp[2].location.lat === null);
+
+    /* ---------- when consent shifts ---------- */
+    sect('When consent shifts');
+    loadFixture();
+    const n = LC.Model.restrictSource('src-1', 'restricted');
+    assert('Restricting a source covers their evidence and their sightings: 2 items', n === 2, 'got ' + n);
+    const pub2 = LC.Model.publicClone();
+    const r1b = pub2.records.find(r => r.id === 'LAC-0001') || {};
+    assert('After restriction, nothing of theirs publishes',
+      (r1b.evidence || []).length === 0 && (r1b.sightings || []).length === 0);
+
+    /* ---------- cautious copies ---------- */
+    sect('Cautious copies');
+    loadFixture();
+    const dup = LC.Model.duplicate('LAC-0001');
+    assert('A duplicate starts held back', dup && !dup.publish);
+    assert('A duplicate’s place resets to withheld', dup && dup.location.publish === 'withheld');
+    assert('A duplicate carries no evidence, sightings, history, or log',
+      dup && !dup.evidence.length && !dup.sightings.length && !dup.statusHistory.length && !dup.log.length);
+    const idx = LC.Model.remove('LAC-0004');
+    const gone = JSON.parse(JSON.stringify(FIXTURE.records[3]));
+    LC.Model.reinsert(LC.Model.normalize(gone), idx);
+    assert('Remove and undo restores the entry in place',
+      LC.state.records[idx] && LC.state.records[idx].id === 'LAC-0004');
+
+    /* ---------- older files load cleanly ---------- */
+    sect('Older files');
+    const legacy = LC.Model.normalize({ id: 'X-1', location: { safe: true, lat: 1, lon: 2 } });
+    assert('A legacy "safe" location becomes exact', legacy.location.publish === 'exact' && !('safe' in legacy.location));
+    const bare = LC.Model.normalize({ id: 'X-2' });
+    assert('A bare record fills in protectively: held back, place withheld',
+      !bare.publish && bare.location.publish === 'withheld' && Array.isArray(bare.sightings) && Array.isArray(bare.log));
+    const oldSight = LC.Model.normalize({ id: 'X-3', sightings: [{ date: '2020-01-01', note: 'from before sightings had consent' }] });
+    assert('A sighting from before consent existed arrives restricted',
+      oldSight.sightings[0].consent === 'restricted');
+
+    /* ---------- the lock ---------- */
+    sect('The lock');
+    if (window.crypto && crypto.subtle && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
+      const secret = NEEDLE + ' the plaintext register';
+      await LC.Lock.set('a test passphrase');
+      const envStr = await LC.Lock.seal(secret);
+      const env = JSON.parse(envStr);
+      assert('Sealing produces a locked envelope', LC.Lock.isEnvelope(env) && env.kdf.iterations === 600000);
+      assert('The envelope carries no plaintext', clean(envStr));
+      const back = await LC.Lock.unseal(env, 'a test passphrase');
+      assert('The right passphrase opens it', back === secret);
+      let refused = false;
+      try { await LC.Lock.unseal(env, 'the wrong passphrase'); } catch (e) { refused = true; }
+      assert('The wrong passphrase does not', refused);
+      LC.Lock.remove();
+    } else {
+      skip('The lock', 'WebCrypto needs https or localhost; serve the folder to prove it');
+    }
+  } catch (e) {
+    results.push({ name: 'The proofs themselves ran to the end', ok: false, detail: String(e && e.stack || e) });
+  }
+
+  /* ---------- the ledger ---------- */
+  const box = document.getElementById('results');
+  const table = document.createElement('table');
+  table.className = 'proofs';
+  let passed = 0, failed = 0, skipped = 0;
+  results.forEach(r => {
+    const tr = document.createElement('tr');
+    if (r.section) {
+      const td = document.createElement('td');
+      td.colSpan = 2; td.className = 'proof-sect'; td.textContent = r.section;
+      tr.append(td);
+    } else {
+      const name = document.createElement('td');
+      name.textContent = r.name;
+      const v = document.createElement('td');
+      if (r.skipped) { skipped++; v.className = 'v skip'; v.textContent = 'not run'; }
+      else if (r.ok) { passed++; v.className = 'v ok'; v.textContent = 'stands'; }
+      else { failed++; v.className = 'v bad'; v.textContent = 'FAILS'; }
+      if (r.detail) {
+        const d = document.createElement('span');
+        d.className = 'detail'; d.textContent = r.detail;
+        name.append(d);
+      }
+      tr.append(name, v);
+    }
+    table.append(tr);
+  });
+  const verdict = document.getElementById('verdict');
+  const stamp = document.createElement('div');
+  stamp.className = 'verdict' + (failed ? ' bad' : '');
+  stamp.textContent = failed
+    ? failed + (failed === 1 ? ' proof fails' : ' proofs fail') + ' · do not release'
+    : 'sound · ' + passed + ' proofs stand' + (skipped ? ' · ' + skipped + ' not run' : '');
+  verdict.append(stamp);
+  box.append(table);
+  document.title = (failed ? 'FAULTED · ' : 'sound · ') + 'MIRL Lacuna proof sheet';
+})();
+</script>
+</body>
+</html>

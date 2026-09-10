@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MIRL Lacuna · what this protects</title>
+<meta name="description" content="Where a Lacuna register lives, what the passphrase lock covers, what leaves the machine, and where the tool's protection ends.">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .prot { max-width: 720px; margin: 0 auto; padding: 44px 44px 90px; }
+  .prot h2 { font-family: var(--serif, Spectral, Georgia, serif); font-weight: 600; font-size: 21px; margin: 40px 0 10px; }
+  .prot p { font-size: 16px; line-height: 1.65; color: var(--ink-2); margin: 0 0 14px; }
+  .prot ul { margin: 0 0 14px; padding-left: 22px; }
+  .prot li { font-size: 16px; line-height: 1.65; color: var(--ink-2); margin-bottom: 8px; }
+  .prot .lede { font-size: 17px; color: var(--ink); }
+  .prot a { color: var(--stamp); }
+  .prot .backline { margin-top: 50px; font-family: var(--mono); font-size: 12.5px; letter-spacing: .1em; text-transform: uppercase; }
+  .prot .backline a { color: var(--ink-3); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header class="app">
+  <div class="plate">
+    <h1>MIRL&nbsp;Lacuna</h1>
+    <span class="tag">what this protects, and what it does not</span>
+  </div>
+  <a class="lab" href="https://mirl.arthistory.ucsb.edu" target="_blank" rel="noopener">Material&nbsp;/&nbsp;Image Research Lab<span class="uni">University of California, Santa&nbsp;Barbara</span></a>
+</header>
+
+<main>
+  <div class="prot">
+    <p class="lede">A Lacuna register can carry risk: the identities of people who
+    remember, the locations of unsafe sites, testimony given in confidence. This
+    page states plainly where your data lives, what the tool protects, and where
+    its protection ends, so that trust rests on facts rather than reassurance.</p>
+
+    <h2>Where the register lives</h2>
+    <p>The page is static. It has no server, no accounts, and no analytics, and
+    it receives nothing: the hosted copy is exactly as private as one you run
+    yourself. Your register exists in at most three places, all of them yours:
+    this browser's own storage (the autosave), a .json project file if you save
+    one or choose <em>Keep the file on disk</em>, and any exports you make. The
+    offline copy the tool keeps of itself, through a service worker, caches the
+    software, never your data.</p>
+
+    <h2>What leaves the machine</h2>
+    <p>Four actions send something out. Each is taken by you; none is automatic.</p>
+    <ul>
+      <li><em>Look up online</em>, on the atlas, sends the typed place name to
+      OpenStreetMap's geocoder. The bundled offline gazetteer, the default,
+      sends nothing.</li>
+      <li>Opening a surviving copy at a web or IIIF address fetches that
+      address.</li>
+      <li><em>Fetch and hash</em>, on an evidence web address, fetches that
+      address to fingerprint it.</li>
+      <li>The Wayback button asks the Internet Archive to save a public web
+      address, in a new tab.</li>
+    </ul>
+    <p>Everything else, every keystroke of cataloguing, geocoding against the
+    bundled gazetteer, the hashing of local evidence files, and the making of
+    every export, happens on your machine.</p>
+
+    <h2>The lock</h2>
+    <p>Locking the register encrypts the file at rest: the browser autosave,
+    the live disk file, and saved project files, with AES-GCM under a key
+    derived from your passphrase (PBKDF2, 600,000 rounds). Anyone who later
+    opens this browser, or picks up the .json, finds an encrypted envelope and
+    nothing else.</p>
+    <p>What the lock does not cover: the open session (while the register is on
+    the screen, it is readable on the screen), the machine itself (a compromised
+    browser, extension, or operating system can read what you can), and a
+    passphrase that is guessed, shared, or coerced. A lost passphrase is lost;
+    there is no recovery, by design. Exports are publications and are never
+    encrypted.</p>
+
+    <h2>Shared or borrowed machines</h2>
+    <p>The browser autosave outlives the tab. On a library or lab computer, the
+    next person at the same browser profile could open your register unless it
+    is locked. When you leave a machine that is not yours, use
+    <em>Project&nbsp;→ Forget on this device</em>: it clears the autosave, the
+    session's key, and the remembered file connection, and leaves the tool
+    empty. Files you saved yourself are untouched, and opening one brings the
+    register back.</p>
+
+    <h2>What exports reveal by design</h2>
+    <p>Every export passes the consent boundary: entries held back or struck,
+    restricted and embargoed evidence, withheld sightings, source identities,
+    the investigation log, and withheld places do not travel. Two things are
+    said aloud on purpose. The finding aid states how many further entries are
+    recorded and not published, because a catalogue of absence should not hide
+    its own. And an approximate place publishes rounded to about ten
+    kilometres, which conceals an address but not a region; if even the region
+    is unsafe to name, keep the place withheld.</p>
+    <p>Publication is a one-way door. Once a finding aid or data file is
+    shared, its contents are in the world's hands, not the register's.</p>
+
+    <h2>What this cannot promise</h2>
+    <p>Lacuna is a browser tool, and honest about it. It cannot protect
+    against a compromised or surveilled device. It cannot revoke what has been
+    published. It does not strip identifying metadata from images you
+    circulate by other means; prepare an image with a dedicated redaction tool
+    before sharing it. Before each release, the consent boundary is tested
+    against a register built to catch leaks: the
+    <a href="tests.html">proof sheet</a> proves that nothing marked restricted,
+    withheld, or held back reaches any export.</p>
+    <p>Where safety depends on more than software, on law, on counsel, on
+    community protocols, use those. When the stakes include life or liberty,
+    treat this tool as one layer of protection, never the only one.</p>
+
+    <div class="backline"><a href="index.html">‹ back to the register</a></div>
+  </div>
+</main>
+
+</body>
+</html>

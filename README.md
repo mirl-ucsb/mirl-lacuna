@@ -2,7 +2,7 @@
 
 **A catalogue for what is gone.**
 
-> **In active development.** This tool is being built and refined in the open. Its features, file formats, and interface may still change, and some parts may be incomplete or rough. Because it is still in development, do not rely on it alone to protect the identities and locations it records, and confirm what is safe to release before you export or share a finding aid. Please keep your own copies of anything important, and reports of whatever breaks are welcome.
+> **In active development.** This tool is being built and refined in the open, and its features and interface may still change. Its safety spine is documented and tested: [What this protects, and what it does not](https://mirl-ucsb.github.io/mirl-lacuna/protection.html) states plainly where your data lives, what the lock covers, and where the tool's protection ends, and before each release an automated [proof sheet](https://mirl-ucsb.github.io/mirl-lacuna/tests.html) verifies that nothing marked restricted, withheld, or held back reaches any export. Even so: read the release preview before you share an export, keep your own copies of anything important, and treat the tool as one layer of protection rather than the only one. Reports of whatever breaks are welcome.
 
 MIRL Lacuna is a free, local-first cataloguer for archives that no longer
 exist. Most collection software assumes the object is on a shelf; Lacuna
@@ -220,7 +220,7 @@ register knows whom it has relationships with.
 
 ## Locking the file
 
-The working file holds restricted testimony and, now, real identities. From
+The working file contains restricted testimony and, now, real identities. From
 **Project · Lock this register**, a passphrase encrypts the file at rest:
 the browser autosave, the live disk file, and every saved project file
 (AES-GCM, with the key derived from your passphrase at 600,000 rounds of
@@ -232,6 +232,15 @@ a laptop that is lost, copied, or opened at a checkpoint. While the register
 is open in your browser, it is open. There is no recovery if the passphrase
 is lost. And exports are publications, so the finding aid, the spreadsheet,
 and the public data remain plain by design.
+
+When you leave a machine that is not yours (a library or lab computer),
+**Project · Forget on this device** clears everything Lacuna keeps in that
+browser: the autosave, the session's key, and the remembered disk-file
+connection. Files you saved yourself are untouched, and opening one brings
+the register back. The full account of where data lives, what can leave
+the machine, and where the tool's protection ends is a page of its own:
+[What this protects, and what it does not](https://mirl-ucsb.github.io/mirl-lacuna/protection.html),
+also reachable from the Project menu.
 
 ---
 
@@ -465,6 +474,13 @@ To regenerate the sample, run `python3 samples/make-samples.py` (needs
 - **Accessibility.** The interface is operable by keyboard throughout, with a
   visible focus ring, a skip link, entry numbers as real links, labelled form
   fields, and dialogs that trap focus and close on Escape.
+- **The consent boundary is tested.** `tests.html`, the proof sheet, builds a
+  synthetic register in which every field that must never publish carries a
+  marker, runs the public clone and every exporter with downloads
+  intercepted, and proves the marker reaches no output; it also covers
+  rounding, round-trip precision, source restriction, duplication, and the
+  lock. Open it in a browser (serve the folder, so the lock proofs run)
+  before shipping a change. It never touches the browser autosave.
 - **No data leaves your machine.** Everything runs in the browser. The only
   network requests Lacuna ever makes are the ones you ask for: opening a
   IIIF copy, fetching a URL to hash it, asking the Internet Archive to save
@@ -510,7 +526,7 @@ you a reference in APA or BibTeX form. Every release is archived on
 note, cite it as:
 
 > Jeff O'Brien, *MIRL Lacuna: a catalogue of an absent archive*, version
-> 1.6.0, Material / Image Research Lab, UC Santa Barbara, 2026,
+> 1.7.0, Material / Image Research Lab, UC Santa Barbara, 2026,
 > https://doi.org/10.5281/zenodo.20651020.
 
 ---

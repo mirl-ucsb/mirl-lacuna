@@ -196,8 +196,9 @@ LC.Model = (function () {
     out.lastSeen = Object.assign({}, d.lastSeen, r.lastSeen || {});
     out.location = Object.assign({}, d.location, r.location || {});
     /* files saved before locations had three publication states used a
-       boolean "safe"; carry it across */
-    if (!LC.vocab.LOCPUB.some(l => l.key === out.location.publish)) {
+       boolean "safe"; carry it across. Judge the file's own value, not the
+       merged one: the default "withheld" is valid and would mask it */
+    if (!LC.vocab.LOCPUB.some(l => l.key === (r.location && r.location.publish))) {
       out.location.publish = (r.location && r.location.safe) ? 'exact' : 'withheld';
     }
     delete out.location.safe;
@@ -559,7 +560,7 @@ LC.Store = (function () {
       return true;
     } catch (e) { return false; }
   }
-  function clear() { try { localStorage.removeItem(KEY); } catch (e) {} }
+  function clear() { clearTimeout(timer); try { localStorage.removeItem(KEY); } catch (e) {} }
 
   /* the current project as it should rest: sealed when locked */
   async function payload() {
@@ -649,6 +650,12 @@ LC.Disk = (function () {
     if (name) LC.util.toast('Stopped saving to ' + name + '; the browser autosave continues');
   }
 
+  /* drop the connection without a word: for Forget on this device */
+  async function forget() {
+    handle = null; stored = null; failed = false;
+    try { await kvSet('fileHandle', null); } catch (e) {}
+  }
+
   async function write(raw, loud) {
     if (!handle || busy) return;
     busy = true;
@@ -665,7 +672,7 @@ LC.Disk = (function () {
     } finally { busy = false; }
   }
 
-  return { supported, init, state, connect, resume, disconnect, write };
+  return { supported, init, state, connect, resume, disconnect, forget, write };
 })();
 
 /* ---------- sha-256, so evidence stays evidentially tethered ---------- */

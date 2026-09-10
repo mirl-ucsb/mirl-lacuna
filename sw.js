@@ -5,7 +5,7 @@
    vendored libraries, and the sample images cache-first (they do not
    change). Bump CACHE with each release so old copies are cleared. */
 
-const CACHE = 'mirl-lacuna-v1.5.2';
+const CACHE = 'mirl-lacuna-v1.6.0';
 
 const CORE = [
   './',

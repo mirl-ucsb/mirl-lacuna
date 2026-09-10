@@ -510,7 +510,7 @@ you a reference in APA or BibTeX form. Every release is archived on
 note, cite it as:
 
 > Jeff O'Brien, *MIRL Lacuna: a catalogue of an absent archive*, version
-> 1.5.2, Material / Image Research Lab, UC Santa Barbara, 2026,
+> 1.6.0, Material / Image Research Lab, UC Santa Barbara, 2026,
 > https://doi.org/10.5281/zenodo.20651020.
 
 ---

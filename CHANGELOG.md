@@ -5,6 +5,43 @@ nothing erased, each change dated and explained. Versions follow
 [semantic versioning](https://semver.org); project files from any earlier
 version load cleanly in any later one.
 
+## 1.6.0 (2026-09-10)
+
+The moment of export becomes a deliberate act.
+
+- **A release preview before anything leaves.** Every public export (finding
+  aid, public data, spreadsheet, GeoJSON, memorial book, notice) now opens
+  with a plain account of what the export carries and what stays in the
+  working file: how many entries publish and how many are held back or
+  struck, which evidence and sightings travel, how many places go out exact
+  or rounded and how many are withheld, and that the investigation log and
+  every identity behind the aliases remain here. Cancel costs nothing;
+  exporting is a decision made with the facts in view.
+- **Sightings now carry their own consent.** Each sighting is public,
+  restricted, or embargoed (with an until date), and new sightings start
+  restricted. Only public sightings enter exports and the finding aid, the
+  working notice marks the withheld ones, and restricting a source now
+  covers their sightings along with their evidence.
+- **Places as GeoJSON.** A new export writes the publishable located places
+  as a `.geojson` FeatureCollection for QGIS or a web map. It passes through
+  the same consent boundary as everything else: published entries only,
+  withheld places absent, approximate places already rounded.
+- **The place-publication decision round-trips.** CSV import now reads a
+  location-precision column (exact, approximate, withheld), so a register
+  exported and re-imported keeps each place's publication state instead of
+  falling back to withheld.
+- **Duplication stays cautious.** Duplicate this entry now resets the copy's
+  location to withheld, and an internal flag noting hand-entered coordinates
+  no longer travels in exports.
+- **More of the page works from the keyboard.** The register's sort headers
+  take Tab, Enter, and Space and announce their direction with `aria-sort`;
+  the atlas pins, gazetteer rows, and timeline entries are keyboard-operable
+  too.
+- **Small mercies.** The masthead shows a quiet autosave indicator (Saving,
+  then Saved), and Remove it outright now acts at once and offers a
+  several-second Undo in place of a confirmation dialog, so a slip is
+  recoverable rather than merely warned about.
+
 ## 1.5.2 (2026-06-18)
 
 - **Opens to a blank register, not the sample.** A first visit now lands on

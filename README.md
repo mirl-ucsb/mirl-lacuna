@@ -480,11 +480,12 @@ To regenerate the sample, run `python3 samples/make-samples.py` (needs
   per-string direction detection in the rendered notice; Arabic text is set
   in Noto Naskh Arabic, vendored alongside Familjen Grotesk, Epilogue, and
   IBM Plex Mono in `fonts/`.
-- **The design** is the Material / Image Research Lab's own identity, shared
-  with the lab site and every MIRL tool: Familjen Grotesk for names and
-  headings, Epilogue for text, the lab's paper white, and Lacuna's key in the
-  violet of the MIRL Risograph mark. Every text colour meets WCAG AA. All
-  typefaces are under the SIL Open Font License; their texts sit in `fonts/`.
+- **The design** is MIRL's own identity, shared with its site and every MIRL
+  tool: Familjen Grotesk for names and headings, Epilogue for text, MIRL's
+  paper white, and Lacuna's key in the violet of the MIRL Risograph mark.
+  Every text colour meets WCAG AA, and the edges of form fields reach the 3:1
+  that WCAG asks of a control's boundary. All typefaces are under the SIL
+  Open Font License, and each one's licence text is in `fonts/`.
 - **The lock** is WebCrypto end to end: PBKDF2 (SHA-256, 600,000 iterations,
   random salt) derives an AES-GCM 256 key that seals the autosave, the disk
   file, and saved projects into a `mirl-lacuna-locked` envelope. The key
@@ -527,7 +528,7 @@ mirl-lacuna/
 ├── protection.html     # what this protects, and what it does not
 ├── tests.html          # the proof sheet: the consent boundary, tested
 ├── sw.js               # offline support
-├── css/style.css       # the design: the lab's identity, one stylesheet
+├── css/style.css       # the design: MIRL's identity, one stylesheet
 ├── js/
 │   ├── model.js        # vocabularies, state, autosave, sha-256, thumbnails
 │   ├── geocode.js      # type a place, resolve it to a point (offline + opt-in online)
@@ -560,7 +561,7 @@ you a reference in APA or BibTeX form. Every release is archived on
 note, cite it as:
 
 > Jeff O'Brien, *MIRL Lacuna: a catalogue of an absent archive*, version
-> 1.7.0, Material / Image Research Lab, UC Santa Barbara, 2026,
+> 1.8.1, Material / Image Research Lab, UC Santa Barbara, 2026,
 > https://doi.org/10.5281/zenodo.20651020.
 
 ---
@@ -569,5 +570,6 @@ Built at the [Material / Image Research Lab](https://mirl.arthistory.ucsb.edu),
 Department of History of Art & Architecture, UC Santa Barbara.
 Released under the MIT License. OpenSeadragon is BSD-licensed; the coastline
 is Natural Earth (public domain); the place gazetteer is built from
-[GeoNames](https://www.geonames.org) (CC BY 4.0); Spectral, IBM Plex Mono,
-and Noto Naskh Arabic are under the SIL Open Font License.
+[GeoNames](https://www.geonames.org) (CC BY 4.0); Familjen Grotesk,
+Epilogue, IBM Plex Mono, and Noto Naskh Arabic are under the SIL Open Font
+License.

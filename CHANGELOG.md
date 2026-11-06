@@ -5,14 +5,43 @@ nothing erased, each change dated and explained. Versions follow
 [semantic versioning](https://semver.org); project files from any earlier
 version load cleanly in any later one.
 
+## 1.8.1 (2026-11-06)
+
+Fixes to the 1.8.0 layout, and housekeeping for its fonts and docs. Nothing
+about how a register is kept, saved, or protected changes.
+
+- **The register fits its window.** At desktop widths the register table was
+  26 pixels wider than its column, and between about 860 and 1200 pixels it
+  pushed the whole page sideways. A held-back tag now drops beneath an
+  entry's number when space is tight, which brings the table inside its
+  column, and below about 1240 pixels the table scrolls within itself, as it
+  already did on phones. The gazetteer and tally tables follow the same rule.
+- **The toolbar stays on one line.** Between 981 and 1100 pixels the buttons
+  Project, Export, and New entry wrapped onto two lines. They no longer
+  wrap, and in that range the views take their own row beneath the mark and
+  the actions, as they do on a phone.
+- **Tables print whole.** On a portrait page, the scroll container added in
+  1.8.0 applied to print as well, clipping the right-hand columns of the
+  printed register and of the memorial book's appendix. Paper cannot scroll,
+  so tables now print in full on any page.
+- **Field edges you can see.** The borders of text fields, selects, and text
+  areas are now 3.5 to 1 against the page, where they were 1.5 to 1, which
+  is the contrast WCAG 1.4.11 asks of a control's boundary.
+- **A licence text for every typeface.** The SIL Open Font License texts for
+  IBM Plex Mono and Noto Naskh Arabic are now in `fonts/`, beside those for
+  Familjen Grotesk and Epilogue. They had never been shipped for these two,
+  though the README said they were.
+- **Docs.** The README's citation line, credits, and design paragraph now
+  match the current release.
+
 ## 1.8.0 (2026-11-05)
 
-Lacuna takes the lab's own identity. Nothing about how a register is kept,
+Lacuna takes MIRL's own identity. Nothing about how a register is kept,
 saved, or protected changes; files from every earlier version open as before.
 
 - **The MIRL identity.** Familjen Grotesk for names and headings and Epilogue
   for everything you read and operate, the same faces as the Material /
-  Image Research Lab's site, on the lab's paper white. Lacuna's key is the
+  Image Research Lab's site, on MIRL's paper white. Lacuna's key is the
   violet of the MIRL Risograph mark, shown as a soft bloom beside its name.
   Both typefaces are vendored in `fonts/` under the SIL Open Font License,
   with their licence texts.

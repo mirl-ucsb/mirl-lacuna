@@ -35,14 +35,15 @@
   --arabic: "Naskh", "Geeza Pro", "Al Bayan", serif;
   --serif: var(--sans);   /* kept as a name; older inline styles use it */
 
-  --bg: #fefaf0;          /* the lab's paper */
+  --bg: #fefaf0;          /* MIRL's paper */
   --surface: #ffffff;     /* fields, menus, dialogs */
   --mat: #f1ecdf;         /* mount behind images and the atlas sea */
   --ink: #1d1b18;
   --ink-2: #4f4b44;       /* secondary text, 8.3:1 on paper */
   --ink-3: #6b665c;       /* quiet text, 5.5:1 on paper */
   --line: #e9e3d4;        /* hairline */
-  --line-2: #d3cbb8;      /* stronger rule and field borders */
+  --line-2: #d3cbb8;      /* stronger rule */
+  --field: #8c8576;       /* the edge of a field, 3.5:1 on paper (WCAG 1.4.11) */
   --soft: #f5f0e3;        /* hover wash */
 
   --key: #8338ec;         /* Lacuna's Risograph key: violet */
@@ -111,6 +112,7 @@ nav.folio button.view:hover:not(:disabled) { color: var(--ink); }
 nav.folio button.view.on { color: var(--ink); border-bottom-color: var(--key); }
 nav.folio button.view:disabled { opacity: .45; cursor: default; }
 nav.folio .tools { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+nav.folio .tools .btn { white-space: nowrap; }
 /* in a published document the tabs line up with the text column */
 nav.folio.doc { height: 52px; padding: 0 max(32px, calc((100% - 1180px) / 2)); }
 
@@ -138,7 +140,7 @@ button.act:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 select, input[type="text"], input[type="url"], input[type="number"], input[type="date"], input[type="password"], input[type="search"], textarea {
   font-family: var(--sans); font-size: 15.5px; color: var(--ink);
-  background: var(--surface); border: 1px solid var(--line-2);
+  background: var(--surface); border: 1px solid var(--field);
   border-radius: var(--radius); padding: 7px 10px; max-width: 100%;
 }
 select:focus, input:focus, textarea:focus { border-color: var(--key); outline: none; box-shadow: 0 0 0 1px var(--key); }
@@ -250,7 +252,9 @@ table.register td {
 }
 table.register tr.entry { cursor: pointer; }
 table.register tr.entry:hover td { background: var(--soft); }
-table.register td.no { font-size: 14.5px; font-weight: 500; color: var(--key-ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+table.register td.no { font-size: 14.5px; font-weight: 500; color: var(--key-ink); font-variant-numeric: tabular-nums; }
+/* the number never breaks; a held-back tag may drop beneath it when the table is tight */
+table.register td.no .entry-link { white-space: nowrap; }
 table.register td.title { color: var(--ink); font-size: 16px; min-width: 230px; }
 table.register td.title .t { font-weight: 500; }
 table.register td.title .t2 { color: var(--ink-2); font-size: 15.5px; display: inline-block; margin-left: 10px; }
@@ -525,6 +529,19 @@ table.register th.sel, table.register td.sel { width: 36px; text-align: center; 
   nav.folio .views { order: 3; width: 100%; height: 44px; overflow-x: auto; gap: 20px; }
   nav.folio button.view { white-space: nowrap; }
 }
+/* the single bar needs about 1050px: until a window is wide enough, the mark and
+   actions share one row and the views take their own, as on a phone */
+@media (min-width: 981px) and (max-width: 1100px) {
+  nav.folio:not(.doc) { height: auto; flex-wrap: wrap; gap: 0 16px; padding: 10px 20px 0; }
+  nav.folio:not(.doc) .brand { height: 44px; }
+  nav.folio:not(.doc) .tools { height: 44px; }
+  nav.folio:not(.doc) .views { order: 3; width: 100%; height: 44px; overflow-x: auto; gap: 20px; }
+  nav.folio:not(.doc) button.view { white-space: nowrap; }
+}
+/* a table wider than its window scrolls inside itself, never the whole page */
+@media (max-width: 1240px) {
+  table.register, table.gazetteer, table.tally { display: block; overflow-x: auto; }
+}
 @media (max-width: 860px) {
   main { padding: 0 18px 64px; }
   header.app { padding: 28px 18px 0; }
@@ -535,8 +552,6 @@ table.register th.sel, table.register td.sel { width: 36px; text-align: center; 
   .row2, .row3 { grid-template-columns: 1fr; }
   .tombstone .ts-row { flex-direction: column; gap: 2px; }
   .tombstone .ts-row dt { flex: none; }
-  /* wide tables scroll inside themselves, never the whole page */
-  table.register, table.gazetteer, table.tally { display: block; overflow-x: auto; }
   nav.folio.doc { height: auto; padding: 8px 18px 0; }
   nav.folio.doc .views { height: 40px; }
   .app-foot { padding: 20px 18px 26px; }
@@ -553,6 +568,8 @@ table.register th.sel, table.register td.sel { width: 36px; text-align: center; 
   section.view.hidden { display: none !important; }
   table.register td, table.register th { padding: 6px 8px; }
   table.register th.sel, table.register td.sel { display: none; }
+  /* paper cannot scroll: a table prints whole, whatever width the page would be on screen */
+  table.register, table.gazetteer, table.tally { display: table; overflow: visible; }
   a { color: inherit; text-decoration: none; }
 }
 

@@ -66,7 +66,7 @@ LC.Timeline = (function () {
       '<p class="subhead">the chronology of disappearance: each thing by the moment it was last seen</p>';
 
     if (!dated.length && !undatedEntries.length && !undatedEvents.length) {
-      h += '<p class="hint" style="font-style:italic">Nothing is dated yet. The chronicle draws on each entry\'s last-seen date, and on the loss events kept on this folio.</p>';
+      h += '<p class="hint">Nothing is dated yet. The timeline draws on each entry\'s last-seen date, and on the loss events kept here.</p>';
       return h;
     }
 
@@ -135,7 +135,7 @@ LC.Timeline = (function () {
     return U.h('div', { class: 'frontmatter', style: { margin: '30px 0 0' } },
       det,
       U.h('div', { class: 'fm-line', style: { marginTop: '10px' } },
-        'Assign entries to an event from the cataloguer\'s desk; the statistics folio counts what each event took.'));
+        'Assign entries to an event from the entry editor; the Statistics view counts what each event took.'));
   }
 
   function render() {

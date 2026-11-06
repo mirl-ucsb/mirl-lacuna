@@ -139,7 +139,7 @@ LC.Tombstone = (function () {
     lines.forEach(l => {
       h += '<tr><td class="kind" style="width:110px;padding-top:13px">' + U.esc(l.label) + '</td>' +
         '<td><a class="rel-link" href="#/entry/' + U.esc(l.rec.id) + '">' +
-        '<span style="font-family:var(--mono);font-size:12.5px;color:var(--stamp)">' + U.esc(l.rec.id) + '</span>  ' +
+        '<span style="font-size:14px;font-weight:500;color:var(--key-ink)">' + U.esc(l.rec.id) + '</span>  ' +
         U.esc(LC.Model.title(l.rec)) + '</a>' +
         (l.rec.struck ? ' <span class="consent restricted">struck</span>' : '') + '</td></tr>';
     });
@@ -491,13 +491,13 @@ LC.Desk = (function () {
           r.eventId = ev.id;
           LC.App.entryChanged(r, true);
           drawEvent();
-          U.toast('Event added and assigned; its date and note live on the Timeline folio');
+          U.toast('Event added and assigned; its date and note live on the Timeline');
         },
       }, '+ Add');
       newName.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); add.click(); } });
       evBox.append(evSel,
         U.h('div', { style: { display: 'flex', gap: '14px', alignItems: 'baseline', marginTop: '10px' } }, newName, add),
-        U.h('div', { class: 'note' }, 'Events (a fire, a sale, a flood) gather entries; their dates, places, and notes are kept on the Timeline folio.'));
+        U.h('div', { class: 'note' }, 'Events (a fire, a sale, a flood) gather entries; their dates, places, and notes are kept on the Timeline.'));
     };
     drawEvent();
     drawHistory();

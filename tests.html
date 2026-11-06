@@ -7,19 +7,20 @@
 <meta name="robots" content="noindex">
 <link rel="stylesheet" href="css/style.css">
 <style>
-  .proof-sheet { max-width: 860px; margin: 0 auto; padding: 40px 44px 80px; }
-  .proof-sheet h2 { font-family: var(--serif, Spectral, Georgia, serif); font-weight: 600; margin: 34px 0 6px; font-size: 21px; }
+  header.app .plate { max-width: 796px; }
+  .proof-sheet { max-width: 860px; margin: 0 auto; padding: 32px 32px 80px; }
+  .proof-sheet h2 { font-family: var(--display); font-weight: 600; letter-spacing: -0.01em; margin: 34px 0 6px; font-size: 22px; }
   .proof-intro { color: var(--ink-2); max-width: 640px; }
-  .verdict { display: inline-block; margin: 22px 0 6px; padding: 7px 16px; border: 2.5px solid var(--ink); font-family: var(--mono); font-size: 15px; letter-spacing: .18em; text-transform: uppercase; transform: rotate(-1.2deg); }
-  .verdict.bad { border-color: var(--stamp); color: var(--stamp); }
+  .verdict { display: inline-block; margin: 22px 0 6px; padding: 7px 14px; border: 2px solid var(--ok); border-radius: 3px; color: var(--ok); font-family: var(--display); font-size: 18px; font-weight: 600; }
+  .verdict.bad { border-color: var(--loss); color: var(--loss); }
   table.proofs { width: 100%; border-collapse: collapse; margin-top: 14px; }
-  table.proofs td { border-bottom: 1px solid var(--line, #ddd); padding: 6px 10px 6px 0; font-size: 15px; vertical-align: baseline; }
-  table.proofs td.v { font-family: var(--mono); font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; width: 74px; text-align: right; white-space: nowrap; }
-  table.proofs td.v.ok { color: var(--ink-3); }
-  table.proofs td.v.bad { color: var(--stamp); font-weight: 600; }
-  table.proofs td.v.skip { color: var(--ink-3); font-style: italic; text-transform: none; letter-spacing: 0; }
-  table.proofs .detail { display: block; color: var(--stamp); font-size: 13.5px; margin-top: 2px; }
-  .proof-sect { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); padding-top: 22px; }
+  table.proofs td { border-bottom: 1px solid var(--line, #ddd); padding: 7px 10px 7px 0; font-size: 15px; vertical-align: baseline; }
+  table.proofs td.v { font-size: 13.5px; font-weight: 600; width: 74px; text-align: right; white-space: nowrap; }
+  table.proofs td.v.ok { color: var(--ok); }
+  table.proofs td.v.bad { color: var(--loss); }
+  table.proofs td.v.skip { color: var(--ink-3); font-weight: 400; }
+  table.proofs .detail { display: block; color: var(--loss); font-size: 13.5px; margin-top: 2px; }
+  .proof-sect { font-family: var(--display); font-size: 17px; font-weight: 600; color: var(--ink); padding-top: 24px; }
 </style>
 </head>
 <body>

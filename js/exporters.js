@@ -134,12 +134,12 @@ LC.Exporters = (function () {
     let body = '';
     body += '<header class="app"><div class="plate"><h1>' + e(p.title || 'Untitled register') + '</h1>' +
       '<span class="tag">' + e(p.subtitle || 'a register of absent works') + '</span></div></header>';
-    body += '<nav class="folio"><div class="views">' +
-      '<button class="view on" data-view="register"><span class="fol">Fol. I</span>Register</button>' +
-      '<button class="view" data-view="timeline"><span class="fol">Fol. II</span>Timeline</button>' +
-      '<button class="view" data-view="statistics"><span class="fol">Fol. III</span>Statistics</button>' +
-      '<button class="view" data-view="atlas"><span class="fol">Fol. IV</span>Atlas</button>' +
-      '<button class="view" data-view="index"><span class="fol">Fol. V</span>Index</button>' +
+    body += '<nav class="folio doc"><div class="views">' +
+      '<button class="view on" data-view="register">Register</button>' +
+      '<button class="view" data-view="timeline">Timeline</button>' +
+      '<button class="view" data-view="statistics">Statistics</button>' +
+      '<button class="view" data-view="atlas">Atlas</button>' +
+      '<button class="view" data-view="index">Index</button>' +
       '</div></nav>';
 
     const heldBack = LC.Model.heldBackCount();
@@ -156,7 +156,7 @@ LC.Exporters = (function () {
     body += '</div></section>';
 
     body += '<section class="view hidden" id="v-entry"><div class="sheet narrow">';
-    body += '<div style="margin:36px 0 0"><a href="#/register" style="font-family:var(--mono);font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);text-decoration:none">‹ Register</a></div>';
+    body += '<div style="margin:32px 0 0"><a href="#/register" style="font-size:15px;font-weight:500;color:var(--key-ink);text-decoration:none">‹ Back to the register</a></div>';
     pub.records.forEach(r => {
       body += '<div class="one tombstone-wrap hidden" id="r-' + e(r.id) + '">' +
         LC.Tombstone.html(r, { static: true, publicOnly: true, project: p, records: pub.records }) + '</div>';

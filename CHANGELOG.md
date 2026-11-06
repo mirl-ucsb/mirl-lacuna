@@ -5,6 +5,34 @@ nothing erased, each change dated and explained. Versions follow
 [semantic versioning](https://semver.org); project files from any earlier
 version load cleanly in any later one.
 
+## 1.8.0 (2026-11-05)
+
+Lacuna takes the lab's own identity. Nothing about how a register is kept,
+saved, or protected changes; files from every earlier version open as before.
+
+- **The MIRL identity.** Familjen Grotesk for names and headings and Epilogue
+  for everything you read and operate, the same faces as the Material /
+  Image Research Lab's site, on the lab's paper white. Lacuna's key is the
+  violet of the MIRL Risograph mark, shown as a soft bloom beside its name.
+  Both typefaces are vendored in `fonts/` under the SIL Open Font License,
+  with their licence texts.
+- **Plain words.** Labels, buttons, and statuses are set in sentence case;
+  the folio numbers and the stamped capitals are gone. Views are simply
+  Register, Entry, Timeline, Statistics, Atlas, and Index.
+- **Readable everywhere.** Every text colour now meets WCAG AA (4.5 to 1 or
+  better; the quietest grey went from about 3 to 1 to 5.5 to 1). Statuses
+  are tinted tags that say what they mean in words as well as colour.
+- **A clearer bar.** One sticky line carries the mark, the views, the save
+  state, and the actions, with New entry as the single filled button; the
+  release preview marks its export as the primary action while focus still
+  starts on Cancel.
+- **Phones.** Wide tables now scroll within themselves, never the whole page,
+  and the bar wraps into a swipeable row of views.
+- **Published documents follow.** The finding aid, the memorial book, the
+  notice for circulation, the protection page, and the proof sheet carry
+  the same type and palette, laid out as documents. The proof sheet still
+  stands: 49 of 49.
+
 ## 1.7.0 (2026-09-10)
 
 The register protects the machine it runs on.

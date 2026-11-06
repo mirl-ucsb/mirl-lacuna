@@ -76,7 +76,7 @@ LC.App = (function () {
       U.h('div', { class: 'dlg-body' }, body));
     const acts = U.h('div', { class: 'dlg-actions' });
     (actions || [{ label: 'Close' }]).forEach(a => {
-      acts.append(U.h('button', { class: 'btn' + (a.danger ? ' danger' : '') }, a.label));
+      acts.append(U.h('button', { class: 'btn' + (a.danger ? ' danger' : '') + (a.primary ? ' primary' : '') }, a.label));
       const b = acts.lastElementChild;
       b.addEventListener('click', () => { if (!a.onclick || a.onclick() !== false) close(); });
     });
@@ -112,7 +112,7 @@ LC.App = (function () {
     body.append(pub, wh);
     sheet('Before the ' + label + ' leaves', body, [
       { label: 'Cancel' },
-      { label: 'Export the ' + label, onclick: () => { onProceed(); } },
+      { label: 'Export the ' + label, primary: true, onclick: () => { onProceed(); } },
     ]);
   }
 

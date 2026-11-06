@@ -26,9 +26,9 @@ stays in your browser and in the files you save. If you would rather run your
 own copy of the tool, this repository is a template (see
 [Making it your own](#making-it-your-own)).
 
-![The register: a ruled ledger of the sample archive, with stamped statuses, a held-back entry, and batch selection](docs/register.png)
+![The register: the sample archive as a table, with status tags, a held-back entry, and batch selection](docs/register.png)
 
-*The register, opened on the fictional sample: stamped statuses, certainty
+*The register, opened on the fictional sample: status tags, certainty
 marks, a held-back entry, and checkboxes for batch work.*
 
 Lacuna is one of four MIRL instruments for heritage after crisis, built to
@@ -61,18 +61,18 @@ moves between the tools without lock-in. The four together:
 
 ---
 
-## The six folios
+## The six views
 
-**Register.** The whole archive as a ruled table: number, title, date, medium,
+**Register.** The whole archive as a table: number, title, date, medium,
 originating collection, status, certainty, last seen. Search it, filter it by
-status with the stamped marks, sort it, and click any line to open the entry.
+status with the tags, sort it, and click any line to open the entry.
 Tick several lines and a batch bar appears for assigning an event, adding a
 tag, or setting a status across all of them at once, which matters right
 after an import when forty entries belong to the same fire. Publication is
 deliberately not among the batch actions: that consent is given one entry at
 a time.
 
-**Entry.** Each record is set as a memorial notice inside a mourning frame:
+**Entry.** Each record is set out as a memorial notice:
 the title (in any language), what the thing was, what became of it, when it
 was last seen and on whose word, the narrative, the evidence, and any
 surviving copies. It is a tombstone, not a 404. Below the notice sits **the
@@ -85,20 +85,20 @@ copy of the descriptive fields, leaving the evidence, sightings, and history
 empty for the new item.
 
 Entries are **struck, not deleted**. A real ledger never erases; it cancels
-visibly. A struck entry stays in the register as a cancelled line, ruled
+visibly. A struck entry stays in the register as a cancelled line, struck
 through, kept out of every export, restorable at any time, and its number is
 never reused. (Outright removal exists for mistaken entries, behind a
 confirmation.)
 
-![A memorial notice: entry LAC-0001 inside its mourning frame, with the destroyed stamp, an Arabic parallel title, the loss event, and consent-marked evidence](docs/entry.png)
+![A memorial notice: entry LAC-0001 with its destroyed status, an Arabic parallel title, the loss event, and consent-marked evidence](docs/entry.png)
 
-*A memorial notice: the stamp, the Arabic parallel title, the loss event,
+*A memorial notice: the status, the Arabic parallel title, the loss event,
 and evidence with its sha-256 fingerprint, thumbnail, and consent marks.*
 
 **Timeline.** The chronology of disappearance: every entry ordered by the
 moment it was last seen, year by year, with the loss events set among them as
-notices. The events themselves (a fire, a sale, a flood) are kept on this
-folio: name, date, place, and a note, so the destruction is treated as a
+notices. The events themselves (a fire, a sale, a flood) are kept here:
+name, date, place, and a note, so the destruction is treated as a
 historical object in its own right, not a phrase repeated across records.
 
 ![The timeline: entries year by year, with the winter fire of 1976 set among them as a bordered loss-event notice](docs/timeline.png)
@@ -111,11 +111,11 @@ and by loss event, set with tally strokes.
 
 ![Statistics: counted entries and tally strokes by loss event](docs/statistics.png)
 
-**Atlas.** Places of last record on a world plate, with a gazetteer beneath.
+**Atlas.** Places of last record on a world map, with a gazetteer beneath.
 Only places marked for publication are ever plotted; the rest are counted,
 not shown.
 
-![The atlas: an equirectangular world plate with the published places of last record](docs/atlas.png)
+![The atlas: an equirectangular world map with the places of last record](docs/atlas.png)
 
 **Index.** The back of the book: alphabetical indexes of creators, tags, and
 places, each line pointing to its entry numbers with dotted leaders, the way
@@ -478,8 +478,13 @@ To regenerate the sample, run `python3 samples/make-samples.py` (needs
   `vendor/make-land.py`; the app itself never touches the network.
 - **Right-to-left scripts** are handled with `dir="auto"` on inputs and
   per-string direction detection in the rendered notice; Arabic text is set
-  in Noto Naskh Arabic, vendored alongside Spectral and IBM Plex Mono in
-  `fonts/`.
+  in Noto Naskh Arabic, vendored alongside Familjen Grotesk, Epilogue, and
+  IBM Plex Mono in `fonts/`.
+- **The design** is the Material / Image Research Lab's own identity, shared
+  with the lab site and every MIRL tool: Familjen Grotesk for names and
+  headings, Epilogue for text, the lab's paper white, and Lacuna's key in the
+  violet of the MIRL Risograph mark. Every text colour meets WCAG AA. All
+  typefaces are under the SIL Open Font License; their texts sit in `fonts/`.
 - **The lock** is WebCrypto end to end: PBKDF2 (SHA-256, 600,000 iterations,
   random salt) derives an AES-GCM 256 key that seals the autosave, the disk
   file, and saved projects into a `mirl-lacuna-locked` envelope. The key
@@ -522,22 +527,22 @@ mirl-lacuna/
 ├── protection.html     # what this protects, and what it does not
 ├── tests.html          # the proof sheet: the consent boundary, tested
 ├── sw.js               # offline support
-├── css/style.css       # the ledger
+├── css/style.css       # the design: the lab's identity, one stylesheet
 ├── js/
 │   ├── model.js        # vocabularies, state, autosave, sha-256, thumbnails
 │   ├── geocode.js      # type a place, resolve it to a point (offline + opt-in online)
-│   ├── register.js     # the ruled table, filters, front matter
+│   ├── register.js     # the register table, filters, front matter
 │   ├── record.js       # the memorial notice + the cataloguer's desk + IIIF
 │   ├── timeline.js     # the chronicle, and the keeping of loss events
 │   ├── stats.js        # tallies
-│   ├── atlas.js        # the world plate and gazetteer
+│   ├── atlas.js        # the world map and gazetteer
 │   ├── indexes.js      # the back of the book
 │   ├── citation.js     # Chicago / MLA / APA / BibTeX per entry
 │   ├── importers.js    # CSV import, project merge, duplicates, fixity
 │   ├── exporters.js    # finding aid, memorial book, CSV, public JSON, GeoJSON, release preview
 │   └── app.js          # routes, menus, dialogs, wiring
 ├── vendor/             # openseadragon.min.js · land.js · gazetteer.js (+ generators)
-├── fonts/              # Spectral, IBM Plex Mono, Noto Naskh Arabic (woff2)
+├── fonts/              # Familjen Grotesk, Epilogue, IBM Plex Mono, Noto Naskh Arabic (woff2, with licences)
 ├── samples/            # the fictional studio register + its generator
 └── docs/               # the screenshots in this README
 ```

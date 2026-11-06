@@ -191,9 +191,13 @@ h2.head { font-family: var(--display); font-size: 27px; font-weight: 600; letter
   display: inline-block; font-family: var(--sans); font-size: 13px; font-weight: 500; line-height: 1.25;
   padding: 3px 8px; border: 1px solid transparent; border-radius: var(--radius); white-space: nowrap;
 }
-.st-destroyed, .st-looted, .st-damaged { color: var(--loss); background: var(--loss-bg); }
-.st-dispersed, .st-unlocated { color: var(--open); background: var(--open-bg); }
-.st-copy, .st-fragment { color: var(--surv); background: var(--surv-bg); }
+/* the status classes colour text anywhere (tally marks, bars); only a tag gets the tint */
+.st-destroyed, .st-looted, .st-damaged { color: var(--loss); }
+.st-dispersed, .st-unlocated { color: var(--open); }
+.st-copy, .st-fragment { color: var(--surv); }
+.mark.st-destroyed, .mark.st-looted, .mark.st-damaged { background: var(--loss-bg); }
+.mark.st-dispersed, .mark.st-unlocated { background: var(--open-bg); }
+.mark.st-copy, .mark.st-fragment { background: var(--surv-bg); }
 
 /* interactive tags (filters, the status chooser) */
 button.mark { cursor: pointer; }
@@ -281,7 +285,8 @@ table.register td .mark { font-size: 12.5px; padding: 2px 7px; }
 .tombstone .ts-no { font-size: 14.5px; font-weight: 500; color: var(--key-ink); padding-top: 4px; font-variant-numeric: tabular-nums; }
 .tombstone .ts-stamp { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
 .tombstone .ts-stamp .mark { font-size: 14px; padding: 4px 10px; }
-.st-struck { color: var(--ink-2); background: var(--open-bg); }
+.st-struck { color: var(--ink-2); }
+.mark.st-struck { background: var(--open-bg); }
 .tombstone h2.ts-title { font-family: var(--display); font-size: 32px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 2px; line-height: 1.15; text-wrap: balance; }
 .tombstone .ts-title-alt { font-size: 23px; color: var(--ink); margin: 6px 0 0; }
 .tombstone .ts-vital { color: var(--ink-2); font-size: 16.5px; margin: 10px 0 0; }
